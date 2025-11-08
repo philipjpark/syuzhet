@@ -1,54 +1,51 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title PredictionMarket
- * @dev A prediction market contract where each prediction is represented as an ERC-20 token
- * Users can buy/sell shares of predictions, and the price is determined by market dynamics
+ * @dev Minimal prediction market contract for Arc Testnet (USDC-based)
+ * 
+ * Arc Testnet deployment tutorial:
+ * https://docs.arc.network/arc/tutorials/deploy-on-arc
+ * 
+ * All markets are collateralized and settled in USDC (ERC-20) on Arc.
+ * USDC on Arc uses 6 decimals (not 18).
  */
 contract PredictionMarket is Ownable {
-    struct Prediction {
+    struct Market {
         string title;
-        string description;
-        uint256 initialPrice; // Price in USDC (6 decimals)
-        uint256 totalSupply;
-        uint256 timeframe; // Unix timestamp
+        string thesis;
+        uint256 expiry;
         address creator;
         bool resolved;
-        bool outcome; // true if prediction came true
-        uint256 createdAt;
+        bool outcome; // for binary yes/no
+        uint256 totalYesShares;
+        uint256 totalNoShares;
+        uint256 liquidityUsdc;
     }
 
-    // Mapping from prediction ID to Prediction struct
-    mapping(uint256 => Prediction) public predictions;
-    
-    // Mapping from prediction ID to ERC20 token contract
-    mapping(uint256 => address) public predictionTokens;
-    
-    // Total number of predictions
-    uint256 public predictionCount;
-    
-    // USDC token on Arc (6 decimals)
-    // See: https://docs.arc.network/arc/references/contract-addresses#usdc
-    // All market deposits/settlements are in USDC on Arc
     IERC20 public usdc;
-    
-    event PredictionCreated(
-        uint256 indexed predictionId,
-        address indexed creator,
+    uint256 public nextMarketId;
+    mapping(uint256 => Market) public markets;
+
+    event MarketCreated(
+        uint256 indexed marketId,
         string title,
-        uint256 initialPrice
+        string thesis,
+        uint256 expiry,
+        address creator,
+        uint256 initialLiquidityUsdc
     );
-    
-    event PredictionResolved(
-        uint256 indexed predictionId,
-        bool outcome
+
+    event MarketUpdated(
+        uint256 indexed marketId,
+        string updateUri,
+        uint256 newSuggestedProbability
     );
-    
+
     /**
      * @param _usdc USDC token address on Arc (6 decimals)
      * All market deposits/settlements are in USDC on Arc
@@ -57,138 +54,76 @@ contract PredictionMarket is Ownable {
         require(_usdc != address(0), "USDC address cannot be zero");
         usdc = IERC20(_usdc);
     }
-    
+
     /**
-     * @dev Create a new prediction and mint initial shares
-     * @param title The prediction title
-     * @param description The prediction description
-     * @param initialPrice Initial price per share in USDC (6 decimals)
-     * @param initialSupply Initial number of shares to mint
-     * @param timeframe Unix timestamp when prediction should be resolved
+     * @dev Create a new prediction market with seed liquidity
+     * @param _title Short, tradeable name
+     * @param _thesis Narrative description
+     * @param _expiry Unix timestamp (seconds) when prediction resolves
+     * @param _initialLiquidityUsdc Seed liquidity in USDC (6 decimals)
      */
-    function createPrediction(
-        string memory title,
-        string memory description,
-        uint256 initialPrice,
-        uint256 initialSupply,
-        uint256 timeframe
-    ) external returns (uint256) {
-        require(initialPrice > 0, "Price must be greater than 0");
-        require(initialSupply > 0, "Supply must be greater than 0");
-        require(timeframe > block.timestamp, "Timeframe must be in the future");
-        
-        uint256 predictionId = predictionCount++;
-        
-        predictions[predictionId] = Prediction({
-            title: title,
-            description: description,
-            initialPrice: initialPrice,
-            totalSupply: initialSupply,
-            timeframe: timeframe,
+    function createMarket(
+        string memory _title,
+        string memory _thesis,
+        uint256 _expiry,
+        uint256 _initialLiquidityUsdc
+    ) external {
+        require(_expiry > block.timestamp, "expiry must be in the future");
+        require(_initialLiquidityUsdc > 0, "liquidity > 0");
+
+        // Pull USDC from creator as seed liquidity
+        require(
+            usdc.transferFrom(msg.sender, address(this), _initialLiquidityUsdc),
+            "USDC transfer failed"
+        );
+
+        uint256 marketId = nextMarketId++;
+        markets[marketId] = Market({
+            title: _title,
+            thesis: _thesis,
+            expiry: _expiry,
             creator: msg.sender,
             resolved: false,
             outcome: false,
-            createdAt: block.timestamp
+            totalYesShares: 0,
+            totalNoShares: 0,
+            liquidityUsdc: _initialLiquidityUsdc
         });
-        
-        // Deploy ERC20 token for this prediction
-        PredictionToken token = new PredictionToken(
-            string(abi.encodePacked("YES-", title)),
-            string(abi.encodePacked("YES", title)),
-            initialSupply,
-            msg.sender
+
+        emit MarketCreated(
+            marketId,
+            _title,
+            _thesis,
+            _expiry,
+            msg.sender,
+            _initialLiquidityUsdc
         );
-        
-        predictionTokens[predictionId] = address(token);
-        
-        emit PredictionCreated(predictionId, msg.sender, title, initialPrice);
-        
-        return predictionId;
     }
-    
+
     /**
-     * @dev Buy shares of a prediction
-     * @param predictionId The ID of the prediction
-     * @param shares Number of shares to buy
+     * @dev Record a narrative update (off-chain content referenced by URI)
+     * @param _marketId The market ID
+     * @param _updateUri URI pointing to update content (e.g., IPFS hash, inline text)
+     * @param _newSuggestedProbability Updated probability suggestion (0-100, representing 0-1)
+     * 
+     * TODO: Add access control if needed (e.g., only creator or authorized updaters)
+     * TODO: In production, pin update content to IPFS and use IPFS hash as URI
      */
-    function buyShares(uint256 predictionId, uint256 shares) external {
-        require(predictionId < predictionCount, "Invalid prediction ID");
-        Prediction storage pred = predictions[predictionId];
-        require(!pred.resolved, "Prediction already resolved");
+    function recordNarrativeUpdate(
+        uint256 _marketId,
+        string memory _updateUri,
+        uint256 _newSuggestedProbability
+    ) external {
+        require(_marketId < nextMarketId, "invalid market");
+        // TODO: Add access control (e.g., require(msg.sender == markets[_marketId].creator))
         
-        address tokenAddress = predictionTokens[predictionId];
-        require(tokenAddress != address(0), "Token not found");
-        
-        // Calculate cost (simplified - in production, use AMM or order book)
-        uint256 cost = pred.initialPrice * shares;
-        
-        // Transfer USDC from buyer
-        usdc.transferFrom(msg.sender, address(this), cost);
-        
-        // Transfer shares to buyer
-        PredictionToken(tokenAddress).transfer(msg.sender, shares);
+        emit MarketUpdated(_marketId, _updateUri, _newSuggestedProbability);
     }
-    
+
     /**
-     * @dev Sell shares of a prediction
-     * @param predictionId The ID of the prediction
-     * @param shares Number of shares to sell
+     * @dev Get market details
      */
-    function sellShares(uint256 predictionId, uint256 shares) external {
-        require(predictionId < predictionCount, "Invalid prediction ID");
-        Prediction storage pred = predictions[predictionId];
-        require(!pred.resolved, "Prediction already resolved");
-        
-        address tokenAddress = predictionTokens[predictionId];
-        require(tokenAddress != address(0), "Token not found");
-        
-        // Transfer shares from seller
-        PredictionToken(tokenAddress).transferFrom(msg.sender, address(this), shares);
-        
-        // Calculate proceeds (simplified - in production, use AMM or order book)
-        uint256 proceeds = pred.initialPrice * shares;
-        
-        // Transfer USDC to seller
-        usdc.transfer(msg.sender, proceeds);
-    }
-    
-    /**
-     * @dev Resolve a prediction (only owner for now, in production use oracle)
-     * @param predictionId The ID of the prediction
-     * @param outcome Whether the prediction came true
-     */
-    function resolvePrediction(uint256 predictionId, bool outcome) external onlyOwner {
-        require(predictionId < predictionCount, "Invalid prediction ID");
-        Prediction storage pred = predictions[predictionId];
-        require(!pred.resolved, "Already resolved");
-        require(block.timestamp >= pred.timeframe, "Too early to resolve");
-        
-        pred.resolved = true;
-        pred.outcome = outcome;
-        
-        emit PredictionResolved(predictionId, outcome);
-    }
-    
-    /**
-     * @dev Get prediction details
-     */
-    function getPrediction(uint256 predictionId) external view returns (Prediction memory) {
-        return predictions[predictionId];
+    function getMarket(uint256 _marketId) external view returns (Market memory) {
+        return markets[_marketId];
     }
 }
-
-/**
- * @title PredictionToken
- * @dev ERC20 token representing shares in a prediction
- */
-contract PredictionToken is ERC20 {
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint256 initialSupply,
-        address initialHolder
-    ) ERC20(name, symbol) {
-        _mint(initialHolder, initialSupply);
-    }
-}
-

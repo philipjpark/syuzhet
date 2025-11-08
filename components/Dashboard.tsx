@@ -33,12 +33,8 @@ export default function Dashboard() {
               Market
             </button>
             <button
-              onClick={() => setActiveTab('create')}
-              className={`px-6 py-2.5 rounded-md font-semibold text-sm flex items-center gap-2 transition-all ${
-                activeTab === 'create'
-                  ? 'bg-lime-400 text-green-950 shadow-lg shadow-lime-500/50'
-                  : 'text-green-200 hover:text-lime-200'
-              }`}
+              onClick={() => window.location.href = '/create'}
+              className="px-6 py-2.5 rounded-md font-semibold text-sm flex items-center gap-2 transition-all text-green-200 hover:text-lime-200"
             >
               <Plus className="w-4 h-4" />
               Create
@@ -60,7 +56,6 @@ export default function Dashboard() {
         {/* Tab Content */}
         <div>
           {activeTab === 'market' && <PredictionList />}
-          {activeTab === 'create' && <CreatePrediction />}
           {activeTab === 'portfolio' && <Portfolio />}
         </div>
       </main>

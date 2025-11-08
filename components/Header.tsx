@@ -24,16 +24,19 @@ export default function Header() {
                   <p className="text-xs text-green-300">(Sue-jet)</p>
             </div>
           </Link>
-          <div className="flex items-center space-x-4">
-            {isAuthenticated && (
-              <div className="text-sm font-medium text-lime-200">
-                {user?.email || 'Demo User'}
-                  </div>
-                )}
-                {!isAuthenticated && (
-                  <div className="text-sm text-green-300 font-medium">Demo Mode</div>
-                )}
-          </div>
+              <div className="flex items-center space-x-4">
+                <div className="px-3 py-1 bg-lime-400/20 border border-lime-400/30 rounded-lg text-xs font-semibold text-lime-200">
+                  Arc Testnet
+                </div>
+                {isAuthenticated && (
+                  <div className="text-sm font-medium text-lime-200">
+                    {user?.email || 'Demo User'}
+                      </div>
+                    )}
+                    {!isAuthenticated && (
+                      <div className="text-sm text-green-300 font-medium">Demo Mode</div>
+                    )}
+              </div>
         </div>
       </div>
     </header>

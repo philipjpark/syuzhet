@@ -28,6 +28,23 @@ Each prediction becomes a **dynamic, yield-bearing asset** whose value emerges f
 
 ---
 
+## 🔄 End-to-End Flow
+
+Syuzhet provides a complete flow from idea to on-chain asset:
+
+1. **Enter Idea & Corpus** → User inputs messy intuition, research notes, and preferences
+2. **AI Generates Thesis** → OpenAI transforms input into structured prediction thesis with probability and parameters
+3. **Review & Edit** → User reviews and adjusts the AI-generated prediction
+4. **Mint On-Chain** → User mints the prediction as a market on Arc Testnet (USDC-based)
+5. **Narrative Updates** → User can post narrative updates with new evidence, updating probability over time
+
+**Key Technologies:**
+- **Arc Testnet + USDC**: All on-chain settlement uses USDC on Arc (6 decimals)
+- **OpenAI**: Powers the AI orchestration layer for prediction generation and narrative updates
+- **Smart Contracts**: Minimal PredictionMarket contract for market creation and update tracking
+
+---
+
 ## 🚀 Quick Start
 
 ```bash

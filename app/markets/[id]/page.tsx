@@ -1,0 +1,212 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Header from '@/components/Header';
+import NarrativeUpdatesFeed from '@/components/NarrativeUpdatesFeed';
+import { ethers } from 'ethers';
+import { getPredictionMarketContract } from '@/lib/contracts';
+import { PREDICTION_MARKET_ADDRESS, ARC_NETWORK } from '@/lib/arcConfig';
+import { Clock, User, DollarSign, ExternalLink } from 'lucide-react';
+
+interface Market {
+  title: string;
+  thesis: string;
+  expiry: number;
+  creator: string;
+  resolved: boolean;
+  outcome: boolean;
+  totalYesShares: number;
+  totalNoShares: number;
+  liquidityUsdc: number;
+}
+
+interface Update {
+  id: string;
+  text: string;
+  probability: number;
+  reasoning: string[];
+  timestamp: number;
+  uri?: string;
+}
+
+export default function MarketDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const marketId = Number(params.id);
+  const [market, setMarket] = useState<Market | null>(null);
+  const [updates, setUpdates] = useState<Update[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadMarket();
+  }, [marketId]);
+
+  const loadMarket = async () => {
+    if (!PREDICTION_MARKET_ADDRESS) {
+      setError('Prediction market contract not configured');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Get provider (use window.ethereum if available, otherwise use RPC)
+      let provider: ethers.Provider;
+      if (typeof window !== 'undefined' && (window as any).ethereum) {
+        provider = new ethers.BrowserProvider((window as any).ethereum);
+      } else {
+        provider = new ethers.JsonRpcProvider(ARC_NETWORK.rpcUrl);
+      }
+
+      const marketContract = getPredictionMarketContract(provider);
+      const marketData = await marketContract.getMarket(marketId);
+
+      // Convert liquidity from 6-decimal USDC units
+      const liquidityUsdc = Number(ethers.formatUnits(marketData.liquidityUsdc, 6));
+
+      setMarket({
+        title: marketData.title,
+        thesis: marketData.thesis,
+        expiry: Number(marketData.expiry),
+        creator: marketData.creator,
+        resolved: marketData.resolved,
+        outcome: marketData.outcome,
+        totalYesShares: Number(marketData.totalYesShares),
+        totalNoShares: Number(marketData.totalNoShares),
+        liquidityUsdc,
+      });
+
+      // TODO: Load updates from contract events or database
+      // For now, use empty array
+    } catch (err: any) {
+      setError(err.message || 'Failed to load market');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateAdded = (update: Update) => {
+    setUpdates((prev) => [update, ...prev]);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-800">
+        <Header />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <div className="text-white">Loading market...</div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error || !market) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-800">
+        <Header />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <div className="text-red-200 mb-4">{error || 'Market not found'}</div>
+            <button
+              onClick={() => router.push('/app')}
+              className="px-6 py-3 bg-lime-400 text-green-950 rounded-xl font-semibold hover:bg-lime-300"
+            >
+              Back to Markets
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const expiryDate = new Date(market.expiry * 1000);
+  const isExpired = expiryDate < new Date();
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-800">
+      <Header />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <button
+            onClick={() => router.push('/app')}
+            className="text-lime-200 hover:text-lime-300 mb-4"
+          >
+            ← Back to Markets
+          </button>
+        </div>
+
+        {/* Market Header */}
+        <div className="bg-gradient-to-br from-green-700/95 via-green-600/90 to-emerald-700/95 rounded-2xl shadow-2xl border border-lime-400/20 p-8 mb-8">
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex-1">
+              <h1 className="text-4xl font-bold text-lime-200 mb-4">{market.title}</h1>
+              <p className="text-white text-lg mb-6">{market.thesis}</p>
+            </div>
+            {isExpired && (
+              <div className="ml-4 px-4 py-2 bg-red-900/50 border border-red-400/30 rounded-lg text-red-200">
+                Expired
+              </div>
+            )}
+            {market.resolved && (
+              <div className="ml-4 px-4 py-2 bg-lime-900/50 border border-lime-400/30 rounded-lg text-lime-200">
+                {market.outcome ? 'YES' : 'NO'}
+              </div>
+            )}
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 pt-6 border-t border-lime-400/20">
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 text-lime-300" />
+              <div>
+                <div className="text-sm text-white/60">Expiry</div>
+                <div className="text-lg font-semibold text-white">{expiryDate.toLocaleString()}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <User className="w-5 h-5 text-lime-300" />
+              <div>
+                <div className="text-sm text-white/60">Creator</div>
+                <div className="text-lg font-mono text-white">{market.creator.slice(0, 8)}...{market.creator.slice(-6)}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <DollarSign className="w-5 h-5 text-lime-300" />
+              <div>
+                <div className="text-sm text-white/60">Liquidity</div>
+                <div className="text-lg font-semibold text-white">{market.liquidityUsdc.toLocaleString()} USDC</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-lime-400/20">
+            <a
+              href={`${ARC_NETWORK.explorer}/address/${PREDICTION_MARKET_ADDRESS}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-lime-200 hover:text-lime-300 text-sm"
+            >
+              View on Arc Explorer
+              <ExternalLink className="w-4 h-4" />
+            </a>
+            <span className="mx-2 text-white/40">•</span>
+            <span className="text-white/60 text-sm">Market ID: {marketId}</span>
+          </div>
+        </div>
+
+        {/* Narrative Updates */}
+        <div className="bg-gradient-to-br from-green-700/95 via-green-600/90 to-emerald-700/95 rounded-2xl shadow-2xl border border-lime-400/20 p-8">
+          <NarrativeUpdatesFeed
+            marketId={marketId}
+            marketThesis={market.thesis}
+            updates={updates}
+            onUpdateAdded={handleUpdateAdded}
+          />
+        </div>
+      </main>
+    </div>
+  );
+}
+
