@@ -55,7 +55,7 @@ export default function PredictionList() {
   });
 
   return (
-    <div className="bg-gradient-to-br from-green-900/90 via-green-800/85 to-emerald-900/90 rounded-xl p-6 border border-lime-400/20">
+    <div className="bg-gradient-to-br from-green-700/90 via-green-600/85 to-emerald-700/90 rounded-xl p-6 border border-lime-400/20">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-lime-200 mb-1">Market</h2>
@@ -64,7 +64,7 @@ export default function PredictionList() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as any)}
-          className="px-4 py-2.5 bg-green-900/50 border border-lime-400/30 rounded-lg text-sm font-medium text-lime-200 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 cursor-pointer"
+          className="px-4 py-2.5 bg-green-700/50 border border-lime-400/30 rounded-lg text-sm font-medium text-lime-200 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 cursor-pointer"
         >
           <option value="volume">Volume</option>
           <option value="price">Price</option>

@@ -15,12 +15,12 @@ export default function Dashboard() {
   const { user } = useDynamicContext();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-green-950">
+    <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-800">
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Tab Navigation - Robinhood Style */}
         <div className="mb-8">
-          <nav className="flex space-x-1 bg-green-900/50 p-1 rounded-lg inline-flex border border-lime-400/20">
+          <nav className="flex space-x-1 bg-green-700/50 p-1 rounded-lg inline-flex border border-lime-400/20">
             <button
               onClick={() => setActiveTab('market')}
               className={`px-6 py-2.5 rounded-md font-semibold text-sm flex items-center gap-2 transition-all ${

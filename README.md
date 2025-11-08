@@ -1,6 +1,6 @@
 <div align="center">
 
-![Syuzhet Logo](./public/syuzhet.png)
+<img src="./public/syuzhet.png" alt="Syuzhet Logo" width="80" />
 
 # Syuzhet
 
@@ -22,7 +22,9 @@ Syuzhet operates at a high-leverage intersection of **finance**, **narrative psy
 
 Each prediction becomes a **dynamic, yield-bearing asset** whose value emerges from belief, participation, and evolving discourse—a new medium for trading intuition, where conviction and creativity parallelizes accuracy as traders figure out whether to **long, short or hedge** these prediction assets.
 
-> **Be the Michael Saylor of the Predictions Markets.**
+> **Be the Michael Saylor of the Predictions Forecasting Markets.**
+
+<img src="./public/Saylor.png" alt="Michael Saylor" width="120" />
 
 ---
 

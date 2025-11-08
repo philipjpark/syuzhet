@@ -8,7 +8,7 @@ export default function Header() {
   const { user, isAuthenticated } = useDynamicContext();
 
   return (
-    <header className="bg-gradient-to-r from-green-950 via-green-900 to-green-950 border-b border-lime-400/30 sticky top-0 z-50 backdrop-blur-sm">
+    <header className="bg-gradient-to-r from-green-800 via-green-700 to-green-800 border-b border-lime-400/30 sticky top-0 z-50 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">

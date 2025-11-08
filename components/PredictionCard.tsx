@@ -27,7 +27,7 @@ export default function PredictionCard({ prediction }: PredictionCardProps) {
 
   return (
     <>
-      <div className="bg-gradient-to-br from-green-900/90 via-green-800/80 to-emerald-900/90 rounded-xl border border-lime-400/30 p-6 hover:border-lime-400/60 hover:shadow-2xl hover:shadow-lime-500/20 transition-all cursor-pointer group">
+      <div className="bg-gradient-to-br from-green-700/90 via-green-600/80 to-emerald-700/90 rounded-xl border border-lime-400/30 p-6 hover:border-lime-400/60 hover:shadow-2xl hover:shadow-lime-500/20 transition-all cursor-pointer group">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-lime-200 mb-1 group-hover:text-lime-300 transition-colors">

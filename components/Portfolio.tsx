@@ -42,7 +42,7 @@ export default function Portfolio() {
       </div>
 
       {/* Portfolio Summary - Ethereal Green Energy Style */}
-      <div className="relative bg-gradient-to-br from-green-950 via-green-900 to-emerald-950 rounded-xl p-8 mb-6 text-white shadow-2xl shadow-lime-500/20 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-green-800 via-green-700 to-emerald-800 rounded-xl p-8 mb-6 text-white shadow-2xl shadow-lime-500/20 overflow-hidden">
         {/* Glowing energy effect */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-radial from-lime-400/30 via-lime-500/20 to-transparent rounded-full blur-3xl"></div>
         <div className="relative z-10">
@@ -77,7 +77,7 @@ export default function Portfolio() {
       </div>
 
       {/* Positions */}
-      <div className="bg-gradient-to-br from-green-900/90 via-green-800/85 to-emerald-900/90 rounded-xl border border-lime-400/20 p-6">
+      <div className="bg-gradient-to-br from-green-700/90 via-green-600/85 to-emerald-700/90 rounded-xl border border-lime-400/20 p-6">
         <h3 className="text-xl font-bold text-lime-200 mb-6">Your Positions</h3>
         {mockPortfolio.positions.length === 0 ? (
           <div className="text-center py-12">

@@ -46,21 +46,16 @@ export function DynamicContextProvider({
   if (!environmentId) {
     isMockMode = true;
     return (
-      <>
-        <div className="fixed top-4 right-4 z-50 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded-lg text-sm shadow-lg">
-          <strong>Demo Mode:</strong> Wallet features disabled. Add NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID to .env for full functionality.
-        </div>
-        <MockDynamicContext.Provider
-          value={{
-            user: { email: 'demo@syuzhet.com' },
-            isAuthenticated: true,
-            setShowAuthFlow: () => {},
-            primaryWallet: null,
-          }}
-        >
-          {children}
-        </MockDynamicContext.Provider>
-      </>
+      <MockDynamicContext.Provider
+        value={{
+          user: { email: 'demo@syuzhet.com' },
+          isAuthenticated: true,
+          setShowAuthFlow: () => {},
+          primaryWallet: null,
+        }}
+      >
+        {children}
+      </MockDynamicContext.Provider>
     );
   }
 
