@@ -7,13 +7,15 @@
 
 import OpenAI from 'openai';
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('OPENAI_API_KEY is required. Please set it in your .env file.');
+// Initialize OpenAI client lazily to avoid throwing during module load
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is required. Please set it in your .env file.');
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
 }
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 export interface GeneratedPrediction {
   title: string;             // short, tradeable name
@@ -67,9 +69,11 @@ Output requirements:
 - Suggested probability: 0-1 based on evidence
 - Reasoning bullets: 3-5 key points supporting the probability estimate
 - Parameters:
-  - expiryTimestamp: Unix timestamp (seconds) for when the prediction resolves
-  - initialYesPrice: Suggested initial price (0-1) for YES shares
+  - expiryTimestamp: Unix timestamp in SECONDS (not milliseconds) for when the prediction resolves. MUST be in the future. Current timestamp is approximately ${Math.floor(Date.now() / 1000)}. For predictions "by 2035", use a timestamp around 2035-01-01. For "within 3 years", use current timestamp + 3 years. Always ensure the timestamp is significantly in the future (at least 1 day from now).
+  - initialYesPrice: Suggested initial price (0-1) for YES shares, typically close to suggestedProbability
   - initialLiquidityUsdc: Suggested seed liquidity in USDC (reasonable amount: 100-10000)
+
+CRITICAL: The expiryTimestamp MUST be a Unix timestamp in SECONDS (not milliseconds) and MUST be in the future. If the time horizon is "by 2035", use a timestamp like 2035-01-01 00:00:00 UTC. If it's "within 3 years", add approximately 94608000 seconds (3 years) to the current timestamp.
 
 Be precise, defensible, and investable. Think like a cross between an investigative journalist and a quantitative analyst.`;
 
@@ -97,13 +101,28 @@ export async function generatePredictionFromCorpus(
 ): Promise<GeneratedPrediction> {
   const { corpusSummary, userNotes, preferences } = input;
 
+  // Truncate corpus if too large (limit to ~20k tokens, roughly 15k characters)
+  const MAX_CORPUS_LENGTH = 15000;
+  let truncatedCorpus = corpusSummary;
+  if (corpusSummary.length > MAX_CORPUS_LENGTH) {
+    truncatedCorpus = corpusSummary.substring(0, MAX_CORPUS_LENGTH) + '\n\n[... Content truncated due to length. Using first ' + Math.round(MAX_CORPUS_LENGTH / 1000) + 'k characters ...]';
+  }
+
+  const currentTimestamp = Math.floor(Date.now() / 1000);
+  const currentDate = new Date().toISOString().split('T')[0];
+  
   const userPrompt = `Generate a prediction thesis from the following input:
 
 CORPUS/RESEARCH:
-${corpusSummary}
+${truncatedCorpus}
 
 ${userNotes ? `USER NOTES:\n${userNotes}\n` : ''}
 ${preferences ? `PREFERENCES:\n${JSON.stringify(preferences, null, 2)}\n` : ''}
+
+IMPORTANT CONTEXT:
+- Current date: ${currentDate}
+- Current Unix timestamp (seconds): ${currentTimestamp}
+- The expiryTimestamp MUST be in SECONDS (not milliseconds) and MUST be significantly in the future (at least 1 day from now)
 
 Generate a structured, tradable prediction thesis. Return ONLY valid JSON matching this exact structure:
 {
@@ -114,15 +133,18 @@ Generate a structured, tradable prediction thesis. Return ONLY valid JSON matchi
   "suggestedProbability": 0.0-1.0,
   "reasoningBullets": ["string", "string", ...],
   "parameters": {
-    "expiryTimestamp": 1234567890,
+    "expiryTimestamp": ${currentTimestamp + 31536000}, // Example: 1 year from now in SECONDS (must be > ${currentTimestamp})
     "initialYesPrice": 0.0-1.0,
     "initialLiquidityUsdc": 100-10000
   }
-}`;
+}
+
+Remember: expiryTimestamp must be a Unix timestamp in SECONDS (not milliseconds) and must be greater than ${currentTimestamp}.`;
 
   try {
+    const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-4o-mini', // Using gpt-4o-mini for higher rate limits (1M TPM) and lower cost
       messages: [
         { role: 'system', content: SYSTEM_PROMPT_PREDICTION },
         { role: 'user', content: userPrompt },
@@ -142,9 +164,24 @@ Generate a structured, tradable prediction thesis. Return ONLY valid JSON matchi
     if (parsed.suggestedProbability < 0 || parsed.suggestedProbability > 1) {
       throw new Error('Invalid probability range');
     }
-    if (parsed.parameters.expiryTimestamp <= Math.floor(Date.now() / 1000)) {
-      throw new Error('Expiry must be in the future');
+    
+    // Fix expiry timestamp if it's in the past or too close to now
+    const now = Math.floor(Date.now() / 1000);
+    const minFutureTime = now + 86400; // At least 1 day in the future
+    
+    // If timestamp is in milliseconds (too large), convert to seconds
+    if (parsed.parameters.expiryTimestamp > 1000000000000) {
+      parsed.parameters.expiryTimestamp = Math.floor(parsed.parameters.expiryTimestamp / 1000);
     }
+    
+    if (parsed.parameters.expiryTimestamp <= minFutureTime) {
+      // Auto-fix: If it's in the past or too close, set it to 1 year from now
+      // or use the time horizon to estimate a better date
+      const oneYearFromNow = now + (365 * 24 * 60 * 60);
+      console.warn(`Expiry timestamp ${parsed.parameters.expiryTimestamp} is too close to now (${now}). Auto-correcting to ${oneYearFromNow}`);
+      parsed.parameters.expiryTimestamp = oneYearFromNow;
+    }
+    
     if (parsed.parameters.initialYesPrice < 0 || parsed.parameters.initialYesPrice > 1) {
       throw new Error('Invalid initial price range');
     }
@@ -164,6 +201,13 @@ export async function generateNarrativeUpdate(
 ): Promise<NarrativeUpdate> {
   const { marketThesis, lastUpdate, newEvidence } = input;
 
+  // Truncate new evidence if too large
+  const MAX_EVIDENCE_LENGTH = 10000;
+  let truncatedEvidence = newEvidence;
+  if (newEvidence.length > MAX_EVIDENCE_LENGTH) {
+    truncatedEvidence = newEvidence.substring(0, MAX_EVIDENCE_LENGTH) + '\n\n[... Evidence truncated due to length ...]';
+  }
+
   const userPrompt = `Generate a narrative update for this prediction market:
 
 ORIGINAL THESIS:
@@ -171,7 +215,7 @@ ${marketThesis}
 
 ${lastUpdate ? `LAST UPDATE:\n${lastUpdate}\n` : 'No previous updates.\n'}
 NEW EVIDENCE:
-${newEvidence}
+${truncatedEvidence}
 
 Generate an update. Return ONLY valid JSON matching this exact structure:
 {
@@ -181,8 +225,9 @@ Generate an update. Return ONLY valid JSON matching this exact structure:
 }`;
 
   try {
+    const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-4o-mini', // Using gpt-4o-mini for higher rate limits (1M TPM) and lower cost
       messages: [
         { role: 'system', content: SYSTEM_PROMPT_UPDATE },
         { role: 'user', content: userPrompt },

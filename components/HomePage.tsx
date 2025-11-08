@@ -12,7 +12,7 @@ export default function HomePage() {
       {/* Hero Section with Ethereal Green Energy Effect */}
       <div className="relative overflow-hidden bg-gradient-to-b from-green-950 via-green-900 to-green-950 min-h-[600px]">
         {/* Central Glowing Energy Core - Radial from bottom center */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full h-full">
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full h-full pointer-events-none">
           <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[800px] h-[800px]">
             {/* White-hot core */}
             <div className="absolute inset-0 bg-gradient-radial from-lime-200 via-lime-300 to-transparent rounded-full blur-3xl opacity-80 animate-pulse"></div>
@@ -24,7 +24,7 @@ export default function HomePage() {
         </div>
         
         {/* Upward Emanating Energy Plumes */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full h-full">
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full h-full pointer-events-none">
           {/* Central plume */}
           <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-96 h-full bg-gradient-to-t from-lime-300/40 via-lime-400/30 to-transparent blur-2xl" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }}></div>
           {/* Left plume */}
@@ -34,13 +34,13 @@ export default function HomePage() {
         </div>
 
         {/* Dark background gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-green-950/90 via-green-900/70 to-green-950/50"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-green-950/60 via-transparent to-green-950/80"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-green-950/90 via-green-900/70 to-green-950/50 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-green-950/60 via-transparent to-green-950/80 pointer-events-none"></div>
         
         {/* Ethereal wispy effects */}
-        <div className="absolute inset-0 bg-gradient-to-r from-green-950/50 via-lime-400/10 to-green-950/50"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-transparent to-green-950/60"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
+        <div className="absolute inset-0 bg-gradient-to-r from-green-950/50 via-lime-400/10 to-green-950/50 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-transparent to-green-950/60 pointer-events-none"></div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
           <div className="text-center">
             <div className="flex justify-center mb-8">
               <div className="relative">
@@ -69,7 +69,7 @@ export default function HomePage() {
               Express intuition, predict the ending, make money along the way
             </p>
             <p className="text-lg sm:text-xl text-white mb-12 max-w-2xl mx-auto">
-              Be the Michael Saylor of the Foresight Markets
+              Be the Michael Saylor of the Foresight Markets (Forecast Long-Term Predictions)
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
@@ -173,11 +173,11 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="relative bg-gradient-to-r from-green-950 via-green-900 to-emerald-950 py-16 overflow-hidden">
-        {/* Glowing energy effect */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-radial from-lime-400/30 via-lime-500/20 to-transparent rounded-full blur-3xl"></div>
-        <div className="relative z-10">
+          {/* CTA Section */}
+          <div className="relative bg-gradient-to-r from-green-950 via-green-900 to-emerald-950 py-16 overflow-hidden">
+            {/* Glowing energy effect */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-radial from-lime-400/30 via-lime-500/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+            <div className="relative z-10">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-lime-200 mb-4">
             Ready to start predicting?

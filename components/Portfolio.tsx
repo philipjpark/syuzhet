@@ -94,25 +94,23 @@ export default function Portfolio() {
               return (
                 <div
                   key={position.id}
-                  className="border border-gray-200 rounded-xl p-5 hover:border-gray-300 hover:shadow-md transition-all"
+                  className="border border-lime-400/30 rounded-xl p-5 hover:border-lime-400/50 hover:shadow-md transition-all"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 mb-1 text-lg">
+                      <h4 className="font-semibold text-white mb-1 text-lg">
                         {position.title}
                       </h4>
-                      <div className="text-sm text-gray-500 font-medium">
+                      <div className="text-sm text-white font-medium">
                         {position.shares} shares @ ${position.avgPrice.toFixed(2)} avg
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-gray-900 mb-1">
+                      <div className="text-xl font-bold text-white mb-1">
                         ${position.value.toFixed(2)}
                       </div>
                       <div
-                        className={`text-base font-bold flex items-center gap-1 justify-end ${
-                          isPosPositive ? 'text-green-600' : 'text-red-600'
-                        }`}
+                        className={`text-base font-bold flex items-center gap-1 justify-end text-white`}
                       >
                         {isPosPositive ? (
                           <TrendingUp className="w-4 h-4" />
@@ -124,7 +122,7 @@ export default function Portfolio() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-500 font-medium pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-4 text-xs text-white font-medium pt-3 border-t border-lime-400/20">
                     <span>Current: ${position.currentPrice.toFixed(2)}</span>
                     <span>•</span>
                     <span>Avg: ${position.avgPrice.toFixed(2)}</span>

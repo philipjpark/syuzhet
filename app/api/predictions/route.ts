@@ -25,6 +25,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('OPENAI_API_KEY is not set in environment variables');
+      return NextResponse.json(
+        { error: 'OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env file.' },
+        { status: 500 }
+      );
+    }
+
     const prediction = await generatePredictionFromCorpus({
       corpusSummary,
       userNotes,
@@ -34,8 +43,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ prediction }, { status: 200 });
   } catch (error: any) {
     console.error('Error in /api/predictions:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Provide more detailed error message
+    let errorMessage = 'Failed to generate prediction';
+    if (error.message) {
+      errorMessage = error.message;
+    } else if (error.response?.data?.error?.message) {
+      errorMessage = error.response.data.error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+
     return NextResponse.json(
-      { error: error.message || 'Failed to generate prediction' },
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

@@ -2,10 +2,15 @@
  * Contract Helpers for Syuzhet
  * 
  * Provides typed contract interfaces for PredictionMarket and USDC on Arc Testnet
+ * 
+ * Note: ethers is imported dynamically to avoid Next.js bundling issues
  */
 
-import { ethers, Contract } from 'ethers';
 import { PREDICTION_MARKET_ADDRESS, USDC_ADDRESS } from './arcConfig';
+
+// Type imports (these don't cause bundling issues)
+type SignerOrProvider = any; // Will be ethers.Signer | ethers.Provider
+type Contract = any; // Will be ethers.Contract
 
 // PredictionMarket ABI (minimal for now)
 const PREDICTION_MARKET_ABI = [
@@ -33,13 +38,16 @@ const USDC_ABI = [
  * @param signerOrProvider ethers Signer or Provider
  * @returns Contract instance
  */
-export function getPredictionMarketContract(
-  signerOrProvider: ethers.Signer | ethers.Provider
-): Contract {
+export async function getPredictionMarketContract(
+  signerOrProvider: SignerOrProvider
+): Promise<Contract> {
   if (!PREDICTION_MARKET_ADDRESS) {
     throw new Error('NEXT_PUBLIC_PREDICTION_MARKET_CONTRACT not set in environment variables');
   }
 
+  // Dynamic import to avoid bundling issues
+  const { ethers } = await import('ethers');
+  
   return new ethers.Contract(
     PREDICTION_MARKET_ADDRESS,
     PREDICTION_MARKET_ABI,
@@ -52,13 +60,16 @@ export function getPredictionMarketContract(
  * @param signerOrProvider ethers Signer or Provider
  * @returns Contract instance
  */
-export function getUsdcContract(
-  signerOrProvider: ethers.Signer | ethers.Provider
-): Contract {
+export async function getUsdcContract(
+  signerOrProvider: SignerOrProvider
+): Promise<Contract> {
   if (!USDC_ADDRESS) {
     throw new Error('NEXT_PUBLIC_USDC_CONTRACT not set in environment variables');
   }
 
+  // Dynamic import to avoid bundling issues
+  const { ethers } = await import('ethers');
+  
   return new ethers.Contract(
     USDC_ADDRESS,
     USDC_ABI,
@@ -71,7 +82,8 @@ export function getUsdcContract(
  * @param amount Human-readable amount (e.g., 100.50)
  * @returns Amount in 6-decimal units (bigint)
  */
-export function toUsdcUnits(amount: number | string): bigint {
+export async function toUsdcUnits(amount: number | string): Promise<bigint> {
+  const { ethers } = await import('ethers');
   return ethers.parseUnits(amount.toString(), 6);
 }
 
@@ -80,7 +92,8 @@ export function toUsdcUnits(amount: number | string): bigint {
  * @param amount Amount in 6-decimal units (bigint)
  * @returns Human-readable amount (string)
  */
-export function fromUsdcUnits(amount: bigint | string): string {
+export async function fromUsdcUnits(amount: bigint | string): Promise<string> {
+  const { ethers } = await import('ethers');
   return ethers.formatUnits(amount.toString(), 6);
 }
 

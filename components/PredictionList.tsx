@@ -8,20 +8,24 @@ import PredictionCard from './PredictionCard';
 const mockPredictions = [
   {
     id: '1',
-    title: 'A human will land on Mars by 2038',
-    description: 'Based on SpaceX Starship progress and NASA funding',
-    probability: 0.42,
-    currentPrice: 0.42,
-    priceChange: 0.05,
+    title: 'First confirmed contact with extraterrestrial intelligence by 2045',
+    thesis: 'Based on increasing exoplanet discoveries, SETI advances, and declassified government documents suggesting ongoing investigations',
+    probability: 0.28,
+    currentPrice: 0.28,
+    priceChange: 0.03,
     volume: 125000,
-    timeframe: 'by 2038',
+    timeframe: 'by 2045',
     category: 'long-horizon speculative',
     holders: 234,
+    expiry: Math.floor(new Date('2045-12-31').getTime() / 1000),
+    creator: '0x1234567890123456789012345678901234567890',
+    liquidityUsdc: 50000,
+    marketId: 1,
   },
   {
     id: '2',
     title: 'US passes national AI transparency law by 2028',
-    description: 'Growing regulatory momentum and bipartisan support',
+    thesis: 'Growing regulatory momentum and bipartisan support for AI governance frameworks',
     probability: 0.68,
     currentPrice: 0.68,
     priceChange: -0.02,
@@ -29,11 +33,15 @@ const mockPredictions = [
     timeframe: 'by 2028',
     category: 'policy',
     holders: 156,
+    expiry: Math.floor(new Date('2028-12-31').getTime() / 1000),
+    creator: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+    liquidityUsdc: 35000,
+    marketId: 2,
   },
   {
     id: '3',
     title: 'Tesla autonomous taxi network approved in one US state by 2027',
-    description: 'Regulatory progress and technology milestones',
+    thesis: 'Regulatory progress and technology milestones suggest approval in at least one state',
     probability: 0.55,
     currentPrice: 0.55,
     priceChange: 0.12,
@@ -41,6 +49,10 @@ const mockPredictions = [
     timeframe: 'by 2027',
     category: 'technology',
     holders: 412,
+    expiry: Math.floor(new Date('2027-12-31').getTime() / 1000),
+    creator: '0x9876543210987654321098765432109876543210',
+    liquidityUsdc: 75000,
+    marketId: 3,
   },
 ];
 
@@ -74,7 +86,19 @@ export default function PredictionList() {
 
       <div className="space-y-3">
         {sortedPredictions.map((prediction) => (
-          <PredictionCard key={prediction.id} prediction={prediction} />
+          <PredictionCard
+            key={prediction.id}
+            title={prediction.title}
+            thesis={prediction.thesis}
+            expiry={prediction.expiry}
+            creator={prediction.creator}
+            liquidityUsdc={prediction.liquidityUsdc}
+            marketId={prediction.marketId}
+            onClick={() => {
+              // Navigate to market detail page
+              window.location.href = `/markets/${prediction.marketId}`;
+            }}
+          />
         ))}
       </div>
     </div>

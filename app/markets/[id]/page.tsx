@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import NarrativeUpdatesFeed from '@/components/NarrativeUpdatesFeed';
-import { ethers } from 'ethers';
 import { getPredictionMarketContract } from '@/lib/contracts';
 import { PREDICTION_MARKET_ADDRESS, ARC_NETWORK } from '@/lib/arcConfig';
 import { Clock, User, DollarSign, ExternalLink } from 'lucide-react';
+import { useDynamicContext } from '@/components/providers/DynamicProvider';
 
 interface Market {
   title: string;
@@ -40,7 +40,10 @@ export default function MarketDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadMarket();
+    // Only load market data on client side to avoid SSR issues with ethers
+    if (typeof window !== 'undefined') {
+      loadMarket();
+    }
   }, [marketId]);
 
   const loadMarket = async () => {
@@ -51,15 +54,13 @@ export default function MarketDetailPage() {
     }
 
     try {
-      // Get provider (use window.ethereum if available, otherwise use RPC)
-      let provider: ethers.Provider;
-      if (typeof window !== 'undefined' && (window as any).ethereum) {
-        provider = new ethers.BrowserProvider((window as any).ethereum);
-      } else {
-        provider = new ethers.JsonRpcProvider(ARC_NETWORK.rpcUrl);
-      }
+      // Dynamically import ethers to avoid bundling issues
+      const { ethers } = await import('ethers');
+      
+      // Get provider (use RPC for read-only operations)
+      const provider = new ethers.JsonRpcProvider(ARC_NETWORK.rpcUrl);
 
-      const marketContract = getPredictionMarketContract(provider);
+      const marketContract = await getPredictionMarketContract(provider);
       const marketData = await marketContract.getMarket(marketId);
 
       // Convert liquidity from 6-decimal USDC units

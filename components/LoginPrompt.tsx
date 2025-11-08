@@ -3,14 +3,27 @@
 import { useDynamicContext } from '@/components/providers/DynamicProvider';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function LoginPrompt() {
   const { isAuthenticated } = useDynamicContext();
   const router = useRouter();
+  const [isDemoMode, setIsDemoMode] = useState(false);
+
+  useEffect(() => {
+    // Check if user has clicked demo mode before
+    const demoMode = localStorage.getItem('syuzhet_demo_mode') === 'true';
+    if (demoMode) {
+      setIsDemoMode(true);
+    }
+  }, []);
 
   const handleDemoLogin = () => {
-    // In mock mode, redirect to app
-    router.push('/app');
+    // Set demo mode in localStorage
+    localStorage.setItem('syuzhet_demo_mode', 'true');
+    setIsDemoMode(true);
+    // Force navigation by using window.location for a hard refresh
+    window.location.href = '/app';
   };
 
   return (

@@ -23,6 +23,17 @@ export default function PredictionCard({
 }: PredictionCardProps) {
   const expiryDate = new Date(expiry * 1000);
   const isExpired = expiryDate < new Date();
+  
+  // Safely format creator address
+  const formatCreator = (addr: string): string => {
+    if (!addr || typeof addr !== 'string') {
+      return 'Unknown';
+    }
+    if (addr.length <= 10) {
+      return addr;
+    }
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
 
   return (
     <div
@@ -48,7 +59,7 @@ export default function PredictionCard({
         </div>
         <div className="flex items-center gap-1">
           <User className="w-4 h-4" />
-          <span className="font-mono text-xs">{creator.slice(0, 6)}...{creator.slice(-4)}</span>
+          <span className="font-mono text-xs">{formatCreator(creator)}</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="font-semibold">{liquidityUsdc.toLocaleString()} USDC</span>

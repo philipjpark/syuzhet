@@ -43,7 +43,8 @@ export function DynamicContextProvider({
   const environmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID;
 
   // Mock mode - show app without wallet functionality
-  if (!environmentId) {
+  // Check if environment ID is missing or is still the placeholder value
+  if (!environmentId || environmentId === 'your_dynamic_environment_id' || environmentId.trim() === '') {
     isMockMode = true;
     return (
       <MockDynamicContext.Provider
