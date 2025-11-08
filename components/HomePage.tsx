@@ -2,10 +2,21 @@
 
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
 import { ArrowRight, TrendingUp, Sparkles, DollarSign, Shield } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
+  const [showSaylor, setShowSaylor] = useState(true);
+
+  // Flash Michael Saylor image every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowSaylor((prev) => !prev);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-green-950">
@@ -68,9 +79,27 @@ export default function HomePage() {
             <p className="text-2xl sm:text-3xl lg:text-4xl text-lime-200 mb-8 font-light drop-shadow-md">
               Express intuition, predict the ending, make money along the way
             </p>
-            <p className="text-lg sm:text-xl text-white mb-12 max-w-2xl mx-auto">
-              Be the Michael Saylor of the Foresight Markets (Forecast Long-Term Predictions)
+            <p className="text-lg sm:text-xl text-white mb-8 max-w-2xl mx-auto">
+              Be the Michael Saylor of the Foresight Markets
             </p>
+            {/* Flashing Michael Saylor Image */}
+            <div className="flex justify-center mb-12">
+              <div className="relative w-[120px] h-[120px]">
+                <div 
+                  className={`transition-opacity duration-500 ${
+                    showSaylor ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
+                  <Image
+                    src="/Saylor.png"
+                    alt="Michael Saylor"
+                    width={120}
+                    height={120}
+                    className="rounded-lg shadow-2xl border-2 border-lime-400/30"
+                  />
+                </div>
+              </div>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => router.push('/app')}
