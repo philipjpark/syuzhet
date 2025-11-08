@@ -1,0 +1,28 @@
+# Files to ignore when deploying to Vercel
+# (Vercel will use .gitignore by default, but this adds extra safety)
+
+# Hardhat files (not needed on Vercel - contracts deployed separately)
+contracts/
+scripts/
+hardhat.config.ts
+cache/
+artifacts/
+typechain-types/
+test/
+
+# Package lock (let Vercel generate fresh one)
+package-lock.json
+
+# Local development files
+.env
+.env.local
+.env*.local
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+

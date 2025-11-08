@@ -93,10 +93,12 @@ Desktop.ini
 *.backup
 *.old
 
-# Package manager locks (optional - some teams commit these)
-# package-lock.json
-# yarn.lock
-# pnpm-lock.yaml
+# Package manager locks
+# Note: For Vercel deployment, you may want to commit package-lock.json
+# but if it causes issues, exclude it and let Vercel regenerate
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Storybook
 storybook-static

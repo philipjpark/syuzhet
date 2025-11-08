@@ -65,6 +65,24 @@ Visit [http://localhost:3000](http://localhost:3000) to see the app.
 
 ---
 
+## 🚀 Deploy to Vercel (Free)
+
+Deploy your Syuzhet app to Vercel's free tier in minutes:
+
+1. **Push to GitHub** (if not already done)
+2. **Deploy contracts first**: Run `npm run deploy` to deploy to Arc Testnet
+3. **Import to Vercel**: Go to [vercel.com](https://vercel.com), import your GitHub repo
+4. **Add environment variables** in Vercel dashboard:
+   - `OPENAI_API_KEY`
+   - `NEXT_PUBLIC_ARC_RPC_URL`
+   - `NEXT_PUBLIC_USDC_CONTRACT`
+   - `NEXT_PUBLIC_PREDICTION_MARKET_CONTRACT` (from deployment)
+5. **Deploy!** Vercel will automatically build and deploy your app
+
+📖 **Detailed instructions:** See [DEPLOY_VERCEL.md](./DEPLOY_VERCEL.md)
+
+---
+
 ## 🌐 Deploy on Arc
 
 Syuzhet is designed to deploy on **Arc Testnet**. The deployment process follows the [official Arc deployment tutorial](https://docs.arc.network/arc/tutorials/deploy-on-arc).
