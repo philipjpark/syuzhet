@@ -28,24 +28,40 @@ Each prediction becomes a **dynamic, yield-bearing asset** whose value emerges f
 
 ---
 
+## 🎥 Demo Video
+
+<div align="center">
+
+[![Syuzhet Demo](https://img.youtube.com/vi/ZtOLHJhOkx0/0.jpg)](https://www.youtube.com/watch?v=ZtOLHJhOkx0)
+
+**[Watch on YouTube](https://www.youtube.com/watch?v=ZtOLHJhOkx0)**
+
+</div>
+
+---
+
 ## 🔄 End-to-End Flow
 
 Syuzhet provides a complete flow from idea to on-chain asset:
 
-1. **Enter Idea & Corpus** → User inputs messy intuition, research notes, and preferences
-2. **AI Generates Thesis** → OpenAI transforms input into structured prediction thesis with probability and parameters
+1. **Enter Idea & Corpus** → User inputs messy intuition, research notes, URLs, and file uploads (PDF, TXT, MD)
+2. **AI Generates Thesis** → OpenAI GPT-4o-mini transforms input into structured prediction thesis with probability and parameters
 3. **Review & Edit** → User reviews and adjusts the AI-generated prediction
-4. **Mint On-Chain** → User mints the prediction as a market on Arc Testnet (USDC-based)
+4. **Mint On-Chain** → User mints the prediction as a market on Arc Testnet (USDC-based) or in demo mode
 5. **Narrative Updates** → User can post narrative updates with new evidence, updating probability over time
 
 **Key Technologies:**
 - **Arc Testnet + USDC**: All on-chain settlement uses USDC on Arc (6 decimals)
-- **OpenAI**: Powers the AI orchestration layer for prediction generation and narrative updates
+- **OpenAI GPT-4o-mini**: Powers the AI orchestration layer for prediction generation and narrative updates
 - **Smart Contracts**: Minimal PredictionMarket contract for market creation and update tracking
+- **Server-Side Wallet**: Rust-based wallet server for seamless transactions
+- **Demo Mode**: Works without contract deployment for easy testing
 
 ---
 
 ## 🚀 Quick Start
+
+### Next.js Application
 
 ```bash
 # Install dependencies
@@ -62,6 +78,23 @@ npm run deploy
 ```
 
 Visit [http://localhost:3000](http://localhost:3000) to see the app.
+
+### Streamlit Application
+
+We also provide a Streamlit version for easy deployment:
+
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Set OpenAI API key
+export OPENAI_API_KEY="sk-proj-your-key-here"
+
+# Run Streamlit app
+streamlit run streamlit_app.py
+```
+
+📖 **Streamlit Deployment:** See [STREAMLIT_DEPLOY.md](./STREAMLIT_DEPLOY.md) for detailed instructions.
 
 ---
 
@@ -119,12 +152,41 @@ Syuzhet uses **USDC on Arc** for all onchain settlement. USDC on Arc uses **6 de
 
 | Category | Technology |
 |----------|-----------|
-| **Frontend** | Next.js 14, TypeScript, Tailwind CSS |
+| **Frontend** | Next.js 14, TypeScript, Tailwind CSS, Streamlit |
 | **Blockchain** | Arc Testnet (EVM-compatible), Hardhat |
-| **Wallet** | Dynamic Labs (current) + Circle Wallets (scaffolded) |
-| **AI** | OpenAI GPT-4 for prediction generation |
+| **Wallet** | Dynamic Labs, Server-side Rust wallet, Circle Wallets (scaffolded) |
+| **AI** | OpenAI GPT-4o-mini for prediction generation |
 | **Smart Contracts** | Solidity, OpenZeppelin |
 | **Token** | USDC on Arc (6 decimals) |
+| **Backend** | Rust (Axum) for wallet server, Next.js API routes |
+| **File Processing** | PDF parsing, directory picker API |
+
+---
+
+## ✨ Recent Features
+
+### 🎯 Enhanced Prediction Creation
+- **Multi-source input**: Upload PDFs, TXT, MD files or paste text
+- **URL research**: Add multiple research URLs
+- **Market sentiment**: Configure market sentiment for better AI context
+- **Directory picker**: Select local directories for bulk file processing
+
+### 💼 Wallet Integration
+- **Server-side wallet**: Rust-based wallet server for seamless transactions
+- **Persistent connection**: Wallet connection persists via localStorage
+- **Demo mode**: Works without wallet connection for testing
+- **Auto-connect**: Wallet automatically connects on button click
+
+### 🚀 Deployment Options
+- **Vercel**: Free deployment with environment variables
+- **Streamlit Cloud**: Python-based alternative deployment
+- **Demo mode**: Works without contract deployment (generates mock markets)
+
+### 🔧 Developer Experience
+- **React Hooks compliance**: Fixed all Rules of Hooks violations
+- **Error handling**: Graceful fallbacks for missing contracts/keys
+- **Type safety**: Full TypeScript coverage
+- **ESLint**: Clean code with proper linting
 
 ---
 
@@ -167,22 +229,42 @@ With Raindrop MCP, AI agents can help evolve:
 ```
 syuzhet/
 ├── app/                    # Next.js app directory
-├── components/             # React components
-│   ├── providers/         # Wallet providers (Dynamic, Circle scaffolded)
+│   ├── api/               # API routes
+│   │   ├── markets/      # Market creation endpoint
+│   │   ├── predictions/  # AI prediction generation
+│   │   ├── process-files/ # File processing (PDF, TXT, MD)
+│   │   └── wallet/       # Wallet connection endpoint
+│   ├── create/           # Prediction creation page
+│   ├── markets/          # Market detail pages
 │   └── ...
-├── contracts/              # Solidity smart contracts
+├── components/            # React components
+│   ├── providers/       # Wallet providers (Dynamic, Circle scaffolded)
+│   ├── PredictionWizard.tsx  # Multi-step prediction creation
+│   ├── WalletConnection.tsx  # Wallet connection UI
+│   └── ...
+├── contracts/             # Solidity smart contracts
 │   ├── PredictionMarket.sol
 │   └── MockUSDC.sol
-├── lib/                    # Utilities and services
-│   ├── arcConfig.ts       # Arc Testnet configuration
-│   ├── usdc.ts            # USDC utilities (6 decimals)
-│   ├── wallets/           # Wallet integrations
-│   └── ...
-├── scripts/                # Deployment scripts
-│   ├── deploy-arc.ts      # Arc Testnet deployment
-│   └── deploy.ts          # Local deployment
-├── .mcp/                   # Raindrop MCP manifest
-└── public/                 # Static assets
+├── lib/                   # Utilities and services
+│   ├── ai/               # OpenAI orchestration
+│   ├── arcConfig.ts      # Arc Testnet configuration
+│   ├── usdc.ts           # USDC utilities (6 decimals)
+│   ├── contracts.ts      # Contract helpers
+│   ├── corpus/           # File/directory reading
+│   └── wallets/          # Wallet integrations
+├── wallet-server/         # Rust wallet server
+│   ├── src/
+│   │   ├── main.rs       # Axum HTTP server
+│   │   ├── wallet.rs     # Wallet service
+│   │   └── config.rs     # Configuration
+│   └── Cargo.toml
+├── scripts/               # Deployment scripts
+│   ├── deploy-arc.ts     # Arc Testnet deployment
+│   └── deploy.ts         # Local deployment
+├── streamlit_app.py      # Streamlit application
+├── requirements.txt       # Python dependencies
+├── .mcp/                  # Raindrop MCP manifest
+└── public/                # Static assets
 ```
 
 ---
@@ -192,6 +274,21 @@ syuzhet/
 - [Arc Deployment Tutorial](https://docs.arc.network/arc/tutorials/deploy-on-arc)
 - [USDC on Arc](https://docs.arc.network/arc/references/contract-addresses#usdc)
 - [Raindrop MCP Setup](./RAINDROP.md)
+- [Streamlit Deployment](./STREAMLIT_DEPLOY.md)
+- [Wallet Integration Guide](./WALLET_USDC_INTEGRATION.md)
+
+---
+
+## 🎮 Demo Mode
+
+Syuzhet includes a **demo mode** that allows you to test the full flow without deploying contracts:
+
+- ✅ Works without `PREDICTION_MARKET_ADDRESS` configured
+- ✅ Works without `PRIVATE_KEY` configured
+- ✅ Generates mock market IDs and transaction hashes
+- ✅ Full UI/UX experience for testing
+
+Simply run `npm run dev` and start creating predictions! The app will automatically use demo mode when contracts aren't deployed.
 
 ---
 
