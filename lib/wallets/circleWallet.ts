@@ -60,14 +60,28 @@ export async function getCircleWalletAddress(
  * @param walletAddress The Circle wallet address
  * @returns USDC balance (in 6-decimal units)
  * 
- * @throws Error if not implemented
+ * For hackathon: Basic implementation using ethers.js
  */
 export async function getWalletBalance(
   walletAddress: string
 ): Promise<bigint> {
-  // TODO: Query USDC balance on Arc Testnet for the wallet address
-  // Use ethers.js or viem to call USDC contract's balanceOf function
-  throw new Error("Not implemented: Circle Wallets integration");
+  // Basic implementation for hackathon demo
+  // In production, this would use Circle Wallets API or cache
+  const { ethers } = await import('ethers');
+  const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_CONTRACT;
+  const RPC_URL = process.env.NEXT_PUBLIC_ARC_RPC_URL || 'https://rpc-testnet.arc.network';
+
+  if (!USDC_ADDRESS) {
+    throw new Error('NEXT_PUBLIC_USDC_CONTRACT not configured');
+  }
+
+  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  const USDC_ABI = [
+    'function balanceOf(address account) external view returns (uint256)',
+  ];
+  const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, provider);
+  
+  return await usdcContract.balanceOf(walletAddress);
 }
 
 /**

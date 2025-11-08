@@ -25,6 +25,7 @@ import { getPredictionMarketContract, getUsdcContract, toUsdcUnits } from '@/lib
 import { PREDICTION_MARKET_ADDRESS, USDC_ADDRESS, ARC_NETWORK } from '@/lib/arcConfig';
 import { useRouter } from 'next/navigation';
 import { selectDirectory, readDirectoryFiles } from '@/lib/corpus/directoryReader';
+import TransactionStatus, { TransactionStatusType as TxStatus } from '@/components/TransactionStatus';
 
 type Step = 'input' | 'review' | 'mint';
 
@@ -40,6 +41,10 @@ export default function PredictionWizard() {
   const [editedPrediction, setEditedPrediction] = useState<GeneratedPrediction | null>(null);
   const [isMinting, setIsMinting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [txStatus, setTxStatus] = useState<TxStatus>('idle');
+  const [txHash, setTxHash] = useState<string | undefined>();
+  const [txMarketId, setTxMarketId] = useState<number | undefined>();
+  const [txExplorerUrl, setTxExplorerUrl] = useState<string | undefined>();
   const [selectedDirectory, setSelectedDirectory] = useState<string | null>(null);
   const [isLoadingDirectory, setIsLoadingDirectory] = useState(false);
   const [directoryFiles, setDirectoryFiles] = useState<File[]>([]);
@@ -175,18 +180,43 @@ export default function PredictionWizard() {
 
   const handleMint = async () => {
     if (!editedPrediction) return;
-    if (!primaryWallet) {
-      setError('Please connect your wallet');
-      return;
-    }
 
     setIsMinting(true);
     setError(null);
+    setTxStatus('pending');
+    setTxHash(undefined);
+    setTxMarketId(undefined);
+    setTxExplorerUrl(undefined);
 
     try {
-      // Get signer from Dynamic Labs wallet
+      // Option 1: Use API route (server-side signing with PRIVATE_KEY)
+      // This is better for hackathon demo as it doesn't require user wallet connection
+      const response = await axios.post('/api/markets/create', {
+        title: editedPrediction.title,
+        thesis: editedPrediction.thesis,
+        expiryTimestamp: editedPrediction.parameters.expiryTimestamp,
+        initialLiquidityUsdc: editedPrediction.parameters.initialLiquidityUsdc,
+      });
+
+      if (response.data.success) {
+        setTxStatus('confirmed');
+        setTxHash(response.data.txHash);
+        setTxMarketId(response.data.marketId);
+        setTxExplorerUrl(response.data.explorerUrl);
+
+        // Redirect to market page after a short delay
+        if (response.data.marketId) {
+          setTimeout(() => {
+            router.push(`/markets/${response.data.marketId}`);
+          }, 2000);
+        }
+      } else {
+        throw new Error(response.data.error || 'Failed to create market');
+      }
+
+      /* Option 2: Direct on-chain (requires user wallet connection)
       if (!primaryWallet) {
-        throw new Error('Wallet not connected');
+        throw new Error('Please connect your wallet');
       }
 
       // Check network
@@ -214,6 +244,9 @@ export default function PredictionWizard() {
         liquidityAmount
       );
 
+      setTxHash(createTx.hash);
+      setTxExplorerUrl(`https://testnet-explorer.arc.network/tx/${createTx.hash}`);
+
       const receipt = await createTx.wait();
 
       // Extract market ID from event
@@ -233,12 +266,18 @@ export default function PredictionWizard() {
       }
 
       if (marketId !== null) {
-        router.push(`/markets/${marketId}`);
+        setTxStatus('confirmed');
+        setTxMarketId(marketId);
+        setTimeout(() => {
+          router.push(`/markets/${marketId}`);
+        }, 2000);
       } else {
-        setError('Market created but could not extract market ID. Check transaction receipt.');
+        throw new Error('Market created but could not extract market ID. Check transaction receipt.');
       }
+      */
     } catch (err: any) {
-      setError(err.message || 'Failed to mint prediction market');
+      setTxStatus('failed');
+      setError(err.response?.data?.error || err.message || 'Failed to mint prediction market');
     } finally {
       setIsMinting(false);
     }
@@ -651,12 +690,6 @@ export default function PredictionWizard() {
               </div>
             </div>
 
-            {!primaryWallet && (
-              <div className="bg-yellow-900/50 border border-yellow-400/30 rounded-xl p-4 text-yellow-200">
-                Please connect your wallet to mint the prediction market.
-              </div>
-            )}
-
             <div className="flex gap-4">
               <button
                 onClick={() => setCurrentStep('review')}
@@ -667,7 +700,7 @@ export default function PredictionWizard() {
               </button>
               <button
                 onClick={handleMint}
-                disabled={isMinting || !primaryWallet}
+                disabled={isMinting}
                 className="flex-1 px-6 py-3 bg-lime-400 text-green-950 rounded-xl font-semibold hover:bg-lime-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-lime-500/50"
               >
                 {isMinting ? (
@@ -679,17 +712,26 @@ export default function PredictionWizard() {
                   'Mint Prediction Asset'
                 )}
               </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {error && (
-        <div className="mt-6 p-4 bg-red-900/50 border border-red-400/30 rounded-xl text-red-200">
-          {error}
+          {/* Transaction Status */}
+          <TransactionStatus
+            status={txStatus}
+            txHash={txHash}
+            marketId={txMarketId}
+            error={error || undefined}
+            explorerUrl={txExplorerUrl}
+          />
+
+          {error && txStatus !== 'failed' && (
+            <div className="mt-6 p-4 bg-red-900/50 border border-red-400/30 rounded-xl text-red-200">
+              {error}
+            </div>
+          )}
         </div>
-      )}
-    </div>
-  );
-}
+      );
+    }
 

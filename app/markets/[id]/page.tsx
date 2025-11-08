@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import NarrativeUpdatesFeed from '@/components/NarrativeUpdatesFeed';
@@ -39,14 +39,7 @@ export default function MarketDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Only load market data on client side to avoid SSR issues with ethers
-    if (typeof window !== 'undefined') {
-      loadMarket();
-    }
-  }, [marketId]);
-
-  const loadMarket = async () => {
+  const loadMarket = useCallback(async () => {
     if (!PREDICTION_MARKET_ADDRESS) {
       setError('Prediction market contract not configured');
       setIsLoading(false);
@@ -85,7 +78,14 @@ export default function MarketDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [marketId]);
+
+  useEffect(() => {
+    // Only load market data on client side to avoid SSR issues with ethers
+    if (typeof window !== 'undefined') {
+      loadMarket();
+    }
+  }, [marketId, loadMarket]);
 
   const handleUpdateAdded = (update: Update) => {
     setUpdates((prev) => [update, ...prev]);

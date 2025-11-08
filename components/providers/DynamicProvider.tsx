@@ -23,16 +23,22 @@ const MockDynamicContext = createContext({
   primaryWallet: null,
 });
 
-// Track if we're in mock mode
-let isMockMode = false;
+// Create a context to track if we're in mock mode
+const MockModeContext = createContext<boolean>(false);
 
 // Export hook that works in both mock and real mode
+// IMPORTANT: Always call hooks unconditionally to follow Rules of Hooks
 export function useDynamicContext() {
-  if (isMockMode) {
-    return useContext(MockDynamicContext);
-  }
-  // In real mode, use the actual Dynamic Labs hook
-  return useRealDynamicContext();
+  // Always call both hooks unconditionally
+  const mockContext = useContext(MockDynamicContext);
+  const isMockMode = useContext(MockModeContext);
+  
+  // Always call the real hook unconditionally
+  // DynamicProvider is always mounted, so this will always work
+  const realContext = useRealDynamicContext();
+  
+  // Return the appropriate context based on mode
+  return isMockMode ? mockContext : realContext;
 }
 
 export function DynamicContextProvider({
@@ -44,9 +50,14 @@ export function DynamicContextProvider({
 
   // Mock mode - show app without wallet functionality
   // Check if environment ID is missing or is still the placeholder value
-  if (!environmentId || environmentId === 'your_dynamic_environment_id' || environmentId.trim() === '') {
-    isMockMode = true;
-    return (
+  const isMockMode = !environmentId || environmentId === 'your_dynamic_environment_id' || environmentId.trim() === '';
+
+  // Always mount DynamicProvider to ensure useRealDynamicContext can be called
+  // In mock mode, we'll use a dummy environment ID
+  const effectiveEnvironmentId = isMockMode ? 'mock-mode' : environmentId!;
+  
+  return (
+    <MockModeContext.Provider value={isMockMode}>
       <MockDynamicContext.Provider
         value={{
           user: { email: 'demo@syuzhet.com' },
@@ -55,42 +66,36 @@ export function DynamicContextProvider({
           primaryWallet: null,
         }}
       >
-        {children}
-      </MockDynamicContext.Provider>
-    );
-  }
-
-  isMockMode = false;
-
-  // Real mode with Dynamic Labs
-  return (
-    <DynamicProvider
-      settings={{
-        environmentId: environmentId!,
-        walletConnectors: [EthereumWalletConnectors],
-        appName: 'Syuzhet',
-        appLogoUrl: '/syuzhet.png',
-        overrides: {
-          evmNetworks: [
-            {
-              chainId: 1243, // Arc Testnet
-              chainName: 'Arc Testnet',
-              nativeCurrency: {
-                name: 'USDC',
-                symbol: 'USDC',
-                decimals: 6,
-              },
-              rpcUrls: [
-                process.env.NEXT_PUBLIC_ARC_RPC_URL || 'https://rpc-testnet.arc.network',
+        {/* Always mount DynamicProvider so useRealDynamicContext can be called */}
+        <DynamicProvider
+          settings={{
+            environmentId: effectiveEnvironmentId,
+            walletConnectors: isMockMode ? [] : [EthereumWalletConnectors],
+            appName: 'Syuzhet',
+            appLogoUrl: '/syuzhet.png',
+            overrides: {
+              evmNetworks: [
+                {
+                  chainId: 1243, // Arc Testnet
+                  chainName: 'Arc Testnet',
+                  nativeCurrency: {
+                    name: 'USDC',
+                    symbol: 'USDC',
+                    decimals: 6,
+                  },
+                  rpcUrls: [
+                    process.env.NEXT_PUBLIC_ARC_RPC_URL || 'https://rpc-testnet.arc.network',
+                  ],
+                  blockExplorerUrls: ['https://testnet-explorer.arc.network'],
+                },
               ],
-              blockExplorerUrls: ['https://testnet-explorer.arc.network'],
             },
-          ],
-        },
-      }}
-    >
-      {children}
-    </DynamicProvider>
+          }}
+        >
+          {children}
+        </DynamicProvider>
+      </MockDynamicContext.Provider>
+    </MockModeContext.Provider>
   );
 }
 

@@ -81,6 +81,7 @@ export async function getUsdcContract(
  * Convert human-readable USDC amount to 6-decimal units
  * @param amount Human-readable amount (e.g., 100.50)
  * @returns Amount in 6-decimal units (bigint)
+ * @deprecated Use toUsdcUnits from lib/usdc.ts instead
  */
 export async function toUsdcUnits(amount: number | string): Promise<bigint> {
   const { ethers } = await import('ethers');

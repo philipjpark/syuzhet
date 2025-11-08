@@ -3,6 +3,7 @@
 import { useDynamicContext } from '@/components/providers/DynamicProvider';
 import Image from 'next/image';
 import Link from 'next/link';
+import WalletConnection from '@/components/WalletConnection';
 
 export default function Header() {
   const { user, isAuthenticated } = useDynamicContext();
@@ -25,17 +26,15 @@ export default function Header() {
             </div>
           </Link>
               <div className="flex items-center space-x-4">
-                <div className="px-3 py-1 bg-lime-400/20 border border-lime-400/30 rounded-lg text-xs font-semibold text-lime-200">
-                  Arc Testnet
-                </div>
+                <WalletConnection />
                 {isAuthenticated && (
                   <div className="text-sm font-medium text-lime-200">
                     {user?.email || 'Demo User'}
-                      </div>
-                    )}
-                    {!isAuthenticated && (
-                      <div className="text-sm text-green-300 font-medium">Demo Mode</div>
-                    )}
+                  </div>
+                )}
+                {!isAuthenticated && (
+                  <div className="text-sm text-green-300 font-medium">Demo Mode</div>
+                )}
               </div>
         </div>
       </div>
