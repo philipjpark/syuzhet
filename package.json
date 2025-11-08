@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "compile": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.ts --network arcTestnet"
+    "deploy": "hardhat run scripts/deploy-arc.ts --network arcTestnet",
+    "deploy:local": "hardhat run scripts/deploy.ts --network localhost"
   },
   "dependencies": {
     "@dynamic-labs/ethereum": "^4.44.0",

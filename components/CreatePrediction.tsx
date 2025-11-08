@@ -7,6 +7,7 @@ import { processFiles } from '@/lib/corpus/processors';
 import { PredictionThesis } from '@/lib/ai/predictionGenerator';
 import PredictionPreview from './PredictionPreview';
 import axios from 'axios';
+import { PREDICTION_MARKET_ADDRESS, USDC_ADDRESS } from '@/lib/arcConfig';
 
 export default function CreatePrediction() {
   const [files, setFiles] = useState<File[]>([]);
@@ -58,6 +59,17 @@ export default function CreatePrediction() {
       });
 
       setPrediction(response.data.prediction);
+      
+      // TODO: After prediction is generated, publish to Arc Testnet
+      // 1. Get user's wallet address (from Dynamic Labs or Circle Wallets)
+      // 2. Call PredictionMarket.createPrediction() on Arc Testnet
+      // 3. Contract address: PREDICTION_MARKET_ADDRESS
+      // 4. USDC address: USDC_ADDRESS
+      // 5. Handle transaction signing and confirmation
+      // Example:
+      //   const contract = new ethers.Contract(PREDICTION_MARKET_ADDRESS, ABI, signer);
+      //   const tx = await contract.createPrediction(...);
+      //   await tx.wait();
     } catch (err: any) {
       setError(`Failed to generate prediction: ${err.response?.data?.error || err.message}`);
     } finally {

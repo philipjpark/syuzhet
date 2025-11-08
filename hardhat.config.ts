@@ -1,3 +1,9 @@
+/**
+ * Hardhat configuration for Syuzhet
+ * 
+ * Arc Testnet deployment tutorial:
+ * https://docs.arc.network/arc/tutorials/deploy-on-arc
+ */
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import * as dotenv from "dotenv";
@@ -21,6 +27,7 @@ const config: HardhatUserConfig = {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
   },
+  defaultNetwork: "arcTestnet",
   paths: {
     sources: "./contracts",
     tests: "./test",

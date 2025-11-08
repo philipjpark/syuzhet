@@ -28,13 +28,44 @@ npm run compile
 npm run deploy
 ```
 
+## Deploy on Arc
+
+Syuzhet is designed to deploy on **Arc Testnet**. The deployment process follows the [official Arc deployment tutorial](https://docs.arc.network/arc/tutorials/deploy-on-arc).
+
+### Prerequisites
+
+1. **Funded wallet**: Get testnet USDC from [Circle Faucet](https://faucet.circle.com) (select Arc Testnet)
+2. **Environment variables**: Set `PRIVATE_KEY` and `ARC_RPC_URL` in your `.env` file
+
+### Deployment Steps
+
+```bash
+# 1. Compile contracts
+npm run compile
+
+# 2. Deploy to Arc Testnet
+npm run deploy
+```
+
+The `npm run deploy` command uses the `arcTestnet` network by default. After deployment:
+
+1. Copy the deployed contract addresses from the console output
+2. Add them to your `.env` file:
+   - `NEXT_PUBLIC_PREDICTION_MARKET_CONTRACT=<deployed_address>`
+   - `NEXT_PUBLIC_USDC_CONTRACT=<usdc_address>`
+
+### USDC on Arc
+
+Syuzhet uses **USDC on Arc** for all onchain settlement. USDC on Arc uses **6 decimals** (not 18). The official Arc Testnet USDC address is configured in `.env.example`. See the [Arc Contract Addresses documentation](https://docs.arc.network/arc/references/contract-addresses#usdc) for details.
+
 ## Tech Stack
 
 - **Frontend**: Next.js 14, TypeScript, Tailwind CSS
 - **Blockchain**: Arc Testnet (EVM-compatible), Hardhat
-- **Wallet**: Dynamic Labs
+- **Wallet**: Dynamic Labs (current) + Circle Wallets (scaffolded integration for Arc)
 - **AI**: OpenAI GPT-4 for prediction generation
 - **Smart Contracts**: Solidity, OpenZeppelin
+- **Token**: USDC on Arc (6 decimals)
 
 ## Environment Setup
 
@@ -55,6 +86,16 @@ PRIVATE_KEY=your_private_key
 NEXT_PUBLIC_PREDICTION_MARKET_CONTRACT=
 NEXT_PUBLIC_USDC_CONTRACT=
 ```
+
+## AI IDE / MCP
+
+This repository is designed to be extended via **Claude Code + Raindrop MCP**. See [RAINDROP.md](./RAINDROP.md) for how to launch an MCP-backed coding session.
+
+With Raindrop MCP, AI agents can help evolve:
+- Arc contract design and optimization
+- Prediction market logic and mechanisms
+- Onchain interactions and integrations
+- Full-stack development across the platform
 
 ## License
 

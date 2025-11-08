@@ -1,7 +1,14 @@
+/**
+ * Local deployment script (for testing)
+ * 
+ * For Arc Testnet deployment, use: npm run deploy
+ * which runs scripts/deploy-arc.ts
+ */
 import { ethers } from "hardhat";
 
 async function main() {
-  // Deploy USDC mock token for testing (in production, use real USDC address)
+  // Deploy USDC mock token for local testing
+  // For Arc Testnet, use the official USDC address instead
   const MockUSDC = await ethers.getContractFactory("MockUSDC");
   const mockUSDC = await MockUSDC.deploy();
   await mockUSDC.waitForDeployment();

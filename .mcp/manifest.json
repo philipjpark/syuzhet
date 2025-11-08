@@ -1,0 +1,50 @@
+{
+  "name": "Syuzhet Foresight Markets on Arc",
+  "description": "A speculative foresight economy where intuition becomes a liquid asset. Implements AI-assisted prediction markets on Arc Testnet with USDC settlement.",
+  "version": "1.0.0",
+  "context": {
+    "blockchain": {
+      "network": "Arc Testnet",
+      "chainId": 1243,
+      "nativeToken": "USDC",
+      "decimals": 6,
+      "rpcUrl": "https://rpc-testnet.arc.network",
+      "explorer": "https://testnet-explorer.arc.network"
+    },
+    "contracts": {
+      "language": "Solidity",
+      "framework": "Hardhat",
+      "mainContract": "PredictionMarket",
+      "tokenStandard": "ERC20",
+      "accountAbstraction": ["Dynamic Labs", "Circle Wallets (scaffolded)"]
+    },
+    "frontend": {
+      "framework": "Next.js 14",
+      "language": "TypeScript",
+      "styling": "Tailwind CSS",
+      "wallet": "Dynamic Labs (current), Circle Wallets (scaffolded)"
+    },
+    "ai": {
+      "predictionGeneration": "OpenAI GPT-4",
+      "mcpSupport": true
+    },
+    "keyFiles": {
+      "contracts": ["contracts/PredictionMarket.sol", "contracts/MockUSDC.sol"],
+      "deployment": ["scripts/deploy-arc.ts", "hardhat.config.ts"],
+      "config": [".env.example", "lib/arcConfig.ts", "lib/usdc.ts"],
+      "walletIntegration": ["lib/wallets/circleWallet.ts", "components/providers/DynamicProvider.tsx"]
+    },
+    "documentation": {
+      "arcDeployment": "https://docs.arc.network/arc/tutorials/deploy-on-arc",
+      "arcUsdc": "https://docs.arc.network/arc/references/contract-addresses#usdc",
+      "raindropMcp": "https://docs.liquidmetal.ai/tutorials/claude-code-mcp-setup/"
+    }
+  },
+  "notes": [
+    "All onchain settlement uses USDC with 6 decimals (not 18)",
+    "Contract addresses are configured via environment variables",
+    "Circle Wallets integration is scaffolded but not yet implemented",
+    "This manifest contains only static text and no secrets"
+  ]
+}
+

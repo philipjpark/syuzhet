@@ -1,3 +1,14 @@
+/**
+ * Wallet Provider for Syuzhet
+ * 
+ * Current implementation: Dynamic Labs
+ * Scaffolded for future: Circle Wallets (see lib/wallets/circleWallet.ts)
+ * 
+ * TODO: Add wallet provider toggle support
+ * - Use getWalletProvider() from lib/wallets/types.ts
+ * - Conditionally render Dynamic Labs or Circle Wallets provider
+ * - See lib/wallets/circleWallet.ts for Circle Wallets integration stubs
+ */
 'use client';
 
 import { DynamicContextProvider as DynamicProvider, useDynamicContext as useRealDynamicContext } from '@dynamic-labs/sdk-react-core';

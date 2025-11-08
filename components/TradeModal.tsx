@@ -129,7 +129,17 @@ export default function TradeModal({ prediction, onClose }: TradeModalProps) {
           </button>
           <button
             onClick={() => {
-              // TODO: Execute trade on blockchain
+              // TODO: Execute trade on Arc Testnet
+              // 1. Get user's wallet address and signer
+              // 2. Call PredictionMarket.buyShares() or sellShares()
+              // 3. Contract address: import from @/lib/arcConfig
+              // 4. Handle USDC approval if needed (ERC20 approve)
+              // 5. Execute transaction and wait for confirmation
+              // 6. Update UI with transaction hash
+              // Example:
+              //   const contract = new ethers.Contract(PREDICTION_MARKET_ADDRESS, ABI, signer);
+              //   const tx = await contract.buyShares(predictionId, shares);
+              //   await tx.wait();
               alert('Trade execution will be implemented with smart contract integration');
               onClose();
             }}

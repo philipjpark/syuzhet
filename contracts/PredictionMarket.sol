@@ -32,8 +32,10 @@ contract PredictionMarket is Ownable {
     // Total number of predictions
     uint256 public predictionCount;
     
-    // USDC token address (6 decimals on Arc)
-    address public usdcToken;
+    // USDC token on Arc (6 decimals)
+    // See: https://docs.arc.network/arc/references/contract-addresses#usdc
+    // All market deposits/settlements are in USDC on Arc
+    IERC20 public usdc;
     
     event PredictionCreated(
         uint256 indexed predictionId,
@@ -47,8 +49,13 @@ contract PredictionMarket is Ownable {
         bool outcome
     );
     
-    constructor(address _usdcToken) Ownable(msg.sender) {
-        usdcToken = _usdcToken;
+    /**
+     * @param _usdc USDC token address on Arc (6 decimals)
+     * All market deposits/settlements are in USDC on Arc
+     */
+    constructor(address _usdc) Ownable(msg.sender) {
+        require(_usdc != address(0), "USDC address cannot be zero");
+        usdc = IERC20(_usdc);
     }
     
     /**
@@ -116,7 +123,7 @@ contract PredictionMarket is Ownable {
         uint256 cost = pred.initialPrice * shares;
         
         // Transfer USDC from buyer
-        IERC20(usdcToken).transferFrom(msg.sender, address(this), cost);
+        usdc.transferFrom(msg.sender, address(this), cost);
         
         // Transfer shares to buyer
         PredictionToken(tokenAddress).transfer(msg.sender, shares);
@@ -142,7 +149,7 @@ contract PredictionMarket is Ownable {
         uint256 proceeds = pred.initialPrice * shares;
         
         // Transfer USDC to seller
-        IERC20(usdcToken).transfer(msg.sender, proceeds);
+        usdc.transfer(msg.sender, proceeds);
     }
     
     /**
