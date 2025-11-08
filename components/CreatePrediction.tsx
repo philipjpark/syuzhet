@@ -17,10 +17,12 @@ import {
   DollarSign,
   Package,
   RefreshCw,
-  Info
+  Info,
+  FolderOpen
 } from 'lucide-react';
 import { processFiles } from '@/lib/corpus/processors';
 import { PredictionThesis } from '@/lib/ai/predictionGenerator';
+import { selectDirectory, readDirectoryFiles } from '@/lib/corpus/directoryReader';
 import axios from 'axios';
 import { PREDICTION_MARKET_ADDRESS, USDC_ADDRESS } from '@/lib/arcConfig';
 
@@ -55,6 +57,8 @@ export default function CreatePrediction() {
   });
   const [error, setError] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isLoadingDirectory, setIsLoadingDirectory] = useState(false);
+  const [selectedDirectory, setSelectedDirectory] = useState<string | null>(null);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: async (acceptedFiles) => {
@@ -75,6 +79,46 @@ export default function CreatePrediction() {
 
   const removeFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSelectDirectory = async () => {
+    setIsLoadingDirectory(true);
+    setError(null);
+
+    try {
+      const directoryHandle = await selectDirectory();
+      
+      if (!directoryHandle) {
+        setIsLoadingDirectory(false);
+        return; // User cancelled
+      }
+
+      setSelectedDirectory(directoryHandle.name);
+      
+      // Read all supported files from the directory
+      const directoryFiles = await readDirectoryFiles(directoryHandle);
+      
+      if (directoryFiles.length === 0) {
+        setError('No supported files found in the selected directory. Please select a directory containing PDF, TXT, or MD files.');
+        setIsLoadingDirectory(false);
+        return;
+      }
+
+      // Add files to the list
+      setFiles((prev) => [...prev, ...directoryFiles]);
+      
+      // Process files and add to corpus
+      try {
+        const corpus = await processFiles(directoryFiles);
+        setCorpusText((prev) => prev + '\n\n' + corpus);
+      } catch (err: any) {
+        setError(`Failed to process some files: ${err.message}`);
+      }
+    } catch (err: any) {
+      setError(`Failed to read directory: ${err.message}`);
+    } finally {
+      setIsLoadingDirectory(false);
+    }
   };
 
   const handleGenerate = async () => {
@@ -225,7 +269,7 @@ export default function CreatePrediction() {
           <div className="space-y-6">
             <div>
               <h2 className="text-3xl font-bold text-lime-200 mb-2">Add Your Research</h2>
-              <p className="text-green-300">Upload documents or paste research to generate your prediction</p>
+              <p className="text-white">Upload documents or paste research to generate your prediction</p>
             </div>
 
             {/* File Upload */}
@@ -233,6 +277,42 @@ export default function CreatePrediction() {
               <label className="block text-sm font-medium text-lime-200 mb-3">
                 Upload Research Materials
               </label>
+              
+              {/* Directory Selection Button */}
+              <div className="mb-4">
+                <button
+                  onClick={handleSelectDirectory}
+                  disabled={isLoadingDirectory}
+                  className="w-full bg-green-800/50 hover:bg-green-800/70 text-white border-2 border-lime-400/30 hover:border-lime-400/50 px-6 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoadingDirectory ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Loading directory...
+                    </>
+                  ) : (
+                    <>
+                      <FolderOpen className="w-5 h-5" />
+                      Select Directory
+                    </>
+                  )}
+                </button>
+                {selectedDirectory && (
+                  <p className="text-sm text-white mt-2 text-center">
+                    Selected: <span className="font-semibold">{selectedDirectory}</span>
+                  </p>
+                )}
+                <p className="text-xs text-white/70 mt-2 text-center">
+                  {typeof window !== 'undefined' && 'showDirectoryPicker' in window
+                    ? 'Select a directory to automatically load all PDF, TXT, and MD files'
+                    : 'Directory selection not available in this browser. Use manual upload instead.'}
+                </p>
+              </div>
+
+              <div className="text-center mb-4">
+                <span className="text-white text-sm">OR</span>
+              </div>
+
               <div
                 {...getRootProps()}
                 className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${
@@ -243,10 +323,10 @@ export default function CreatePrediction() {
               >
                 <input {...getInputProps()} />
                 <Upload className="w-16 h-16 mx-auto text-lime-300 mb-4" />
-                <p className="text-lg text-lime-200 font-medium mb-2">
+                <p className="text-lg text-white font-medium mb-2">
                   {isDragActive ? 'Drop files here...' : 'Drag & drop files here'}
                 </p>
-                <p className="text-sm text-green-300">
+                <p className="text-sm text-white">
                   or click to select • PDF, TXT, MD files supported
                 </p>
               </div>
@@ -302,7 +382,7 @@ export default function CreatePrediction() {
           <div className="space-y-6">
             <div>
               <h2 className="text-3xl font-bold text-lime-200 mb-2">Generate Prediction</h2>
-              <p className="text-green-300">AI will analyze your research and create an investable prediction thesis</p>
+              <p className="text-white">AI will analyze your research and create an investable prediction thesis</p>
             </div>
 
             {!prediction ? (
@@ -312,7 +392,7 @@ export default function CreatePrediction() {
                   <p className="text-lg text-lime-200 mb-4">
                     Ready to generate your prediction?
                   </p>
-                  <p className="text-sm text-green-300 mb-8">
+                  <p className="text-sm text-white mb-8">
                     Our AI will analyze your research and create a structured, tradable prediction asset
                   </p>
                 </div>
@@ -340,16 +420,16 @@ export default function CreatePrediction() {
                   <CheckCircle className="w-6 h-6 text-lime-400 mt-1 flex-shrink-0" />
                   <div className="flex-1">
                     <h3 className="text-xl font-bold text-lime-200 mb-2">{prediction.title}</h3>
-                    <p className="text-green-200 mb-4">{prediction.description}</p>
+                    <p className="text-white mb-4">{prediction.description}</p>
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-green-300">Probability:</span>
+                        <span className="text-white">Probability:</span>
                         <span className="text-lime-200 font-semibold">
                           {(prediction.probability * 100).toFixed(0)}%
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-green-300">Timeframe:</span>
+                        <span className="text-white">Timeframe:</span>
                         <span className="text-lime-200 font-semibold">{prediction.timeframe}</span>
                       </div>
                     </div>
@@ -365,7 +445,7 @@ export default function CreatePrediction() {
           <div className="space-y-6">
             <div>
               <h2 className="text-3xl font-bold text-lime-200 mb-2">Configure Your Prediction</h2>
-              <p className="text-green-300">Set up your prediction asset parameters</p>
+              <p className="text-white">Set up your prediction asset parameters</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
@@ -508,31 +588,31 @@ export default function CreatePrediction() {
           <div className="space-y-6">
             <div>
               <h2 className="text-3xl font-bold text-lime-200 mb-2">Preview Your Prediction</h2>
-              <p className="text-green-300">Review your prediction asset before publishing</p>
+              <p className="text-white">Review your prediction asset before publishing</p>
             </div>
 
             <div className="bg-green-900/50 rounded-xl p-8 border border-lime-400/20">
               <div className="space-y-6">
                 <div>
                   <h3 className="text-2xl font-bold text-lime-200 mb-2">{prediction.title}</h3>
-                  <p className="text-green-200">{config.description || prediction.description}</p>
+                  <p className="text-white">{config.description || prediction.description}</p>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-4 pt-6 border-t border-lime-400/20">
                   <div>
-                    <div className="text-sm text-green-300 mb-1">Initial Price</div>
+                    <div className="text-sm text-white mb-1">Initial Price</div>
                     <div className="text-2xl font-bold text-lime-200">
                       ${config.initialPrice.toFixed(2)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-green-300 mb-1">Total Supply</div>
+                    <div className="text-sm text-white mb-1">Total Supply</div>
                     <div className="text-2xl font-bold text-lime-200">
                       {config.initialSupply.toLocaleString()}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-green-300 mb-1">Resolution Date</div>
+                    <div className="text-sm text-white mb-1">Resolution Date</div>
                     <div className="text-xl font-semibold text-lime-200">
                       {config.timeframeDate ? new Date(config.timeframeDate).toLocaleDateString() : 'Not set'}
                     </div>
@@ -540,7 +620,7 @@ export default function CreatePrediction() {
                 </div>
 
                 <div className="pt-6 border-t border-lime-400/20">
-                  <div className="flex items-center gap-2 text-sm text-green-300 mb-2">
+                  <div className="flex items-center gap-2 text-sm text-white mb-2">
                     <span>Category:</span>
                     <span className="text-lime-200 font-semibold capitalize">{config.category}</span>
                     {config.allowUpdates && (
@@ -552,7 +632,7 @@ export default function CreatePrediction() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-300">AI Probability:</span>
+                    <span className="text-white">AI Probability:</span>
                     <span className="text-lime-200 font-semibold">
                       {(prediction.probability * 100).toFixed(0)}%
                     </span>
@@ -568,7 +648,7 @@ export default function CreatePrediction() {
           <div className="text-center py-12">
             <CheckCircle className="w-20 h-20 mx-auto text-lime-400 mb-6" />
             <h2 className="text-3xl font-bold text-lime-200 mb-4">Prediction Published!</h2>
-            <p className="text-green-300 mb-8">
+            <p className="text-white mb-8">
               Your prediction asset is now live on the market
             </p>
             <button

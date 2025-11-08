@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./public/syuzhet.png" alt="Syuzhet Logo" width="80" />
+<img src="./public/syuzhet.png" alt="Syuzhet Logo" width="240" />
 
 # Syuzhet
 

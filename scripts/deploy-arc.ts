@@ -10,7 +10,8 @@
  *   npm run deploy
  */
 
-import { ethers } from "hardhat";
+import hre from "hardhat";
+const { ethers } = hre;
 
 async function main() {
   console.log("Deploying to Arc Testnet...\n");
@@ -18,14 +19,11 @@ async function main() {
   // Get USDC contract address from environment
   // On Arc Testnet, use the official USDC address or a mock for testing
   // Official Arc Testnet USDC: https://docs.arc.network/arc/references/contract-addresses#usdc
-  const usdcAddress =
-    process.env.USDC_CONTRACT ||
-    process.env.NEXT_PUBLIC_USDC_CONTRACT ||
-    "0x3600000000000000000000000000000000000000"; // Arc Testnet USDC placeholder
+  const usdcAddress = process.env.NEXT_PUBLIC_USDC_CONTRACT || "0x3600000000000000000000000000000000000000";
 
   if (!usdcAddress || usdcAddress === "0x3600000000000000000000000000000000000000") {
     console.warn(
-      "⚠️  WARNING: Using placeholder USDC address. Set USDC_CONTRACT or NEXT_PUBLIC_USDC_CONTRACT in .env"
+      "⚠️  WARNING: Using placeholder USDC address. Set NEXT_PUBLIC_USDC_CONTRACT in .env"
     );
     console.warn(
       "   See: https://docs.arc.network/arc/references/contract-addresses#usdc"
@@ -42,9 +40,9 @@ async function main() {
   const marketAddress = await predictionMarket.getAddress();
 
   console.log("\n✅ Deployment successful!");
-  console.log("=" .repeat(60));
+  console.log("=".repeat(60));
   console.log(`PredictionMarket deployed to: ${marketAddress}`);
-  console.log("=" .repeat(60));
+  console.log("=".repeat(60));
   console.log("\n📋 TODO: Copy these addresses into your .env file:\n");
   console.log(`NEXT_PUBLIC_PREDICTION_MARKET_CONTRACT=${marketAddress}`);
   console.log(`NEXT_PUBLIC_USDC_CONTRACT=${usdcAddress}`);
@@ -59,4 +57,3 @@ main()
     console.error(error);
     process.exit(1);
   });
-

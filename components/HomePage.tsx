@@ -68,7 +68,7 @@ export default function HomePage() {
             <p className="text-2xl sm:text-3xl lg:text-4xl text-lime-200 mb-8 font-light drop-shadow-md">
               Express intuition, predict the ending, make money along the way
             </p>
-            <p className="text-lg sm:text-xl text-green-200 mb-12 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-white mb-12 max-w-2xl mx-auto">
               Be the Michael Saylor of the Foresight Markets
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -97,7 +97,7 @@ export default function HomePage() {
             <h2 className="text-4xl font-bold text-lime-200 mb-4">
               Why Syuzhet?
             </h2>
-            <p className="text-xl text-green-200 max-w-2xl mx-auto">
+            <p className="text-xl text-white max-w-2xl mx-auto">
               The future of prediction markets, powered by AI and blockchain
             </p>
           </div>
@@ -123,7 +123,7 @@ export default function HomePage() {
                   <TrendingUp className="w-6 h-6 text-green-950" />
                 </div>
                 <h3 className="text-xl font-bold text-lime-200 mb-2">Trade Like Stocks</h3>
-                <p className="text-green-100">
+                <p className="text-white">
                   Buy and sell prediction shares with USDC. Real-time pricing, portfolio tracking, and market insights.
                 </p>
               </div>
@@ -136,7 +136,7 @@ export default function HomePage() {
                   <Shield className="w-6 h-6 text-green-950" />
                 </div>
                 <h3 className="text-xl font-bold text-lime-200 mb-2">Blockchain Secured</h3>
-                <p className="text-green-100">
+                <p className="text-white">
                   Built on Arc blockchain with smart contracts. Your predictions are immutable and tradable assets.
                 </p>
               </div>
@@ -166,7 +166,7 @@ export default function HomePage() {
                   {item.step}
                 </div>
                 <h3 className="text-lg font-semibold text-lime-200 mb-2">{item.title}</h3>
-                <p className="text-green-100">{item.desc}</p>
+                <p className="text-white">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -182,7 +182,7 @@ export default function HomePage() {
           <h2 className="text-3xl sm:text-4xl font-bold text-lime-200 mb-4">
             Ready to start predicting?
           </h2>
-          <p className="text-xl text-green-200 mb-8">
+          <p className="text-xl text-white mb-8">
             Join the future of prediction markets today
           </p>
           <button
