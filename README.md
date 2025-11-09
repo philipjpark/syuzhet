@@ -40,6 +40,24 @@ Each prediction becomes a **dynamic, yield-bearing asset** whose value emerges f
 
 ---
 
+## 📄 Documentation PDF
+
+<div align="center">
+
+### 📖 Syuzhet Documentation
+
+<a href="./public/Syuzhet.pdf" target="_blank">
+  <img src="./public/syuzhet.png" alt="Syuzhet Documentation PDF" width="200" style="border: 2px solid #84cc16; border-radius: 12px; padding: 10px; cursor: pointer;" />
+</a>
+
+<br/><br/>
+
+**[📥 Download PDF](./public/Syuzhet.pdf)** | **[👁️ View in Browser](./public/Syuzhet.pdf)**
+
+</div>
+
+---
+
 ## 🔄 End-to-End Flow
 
 Syuzhet provides a complete flow from idea to on-chain asset:
