@@ -47,6 +47,10 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
+# Wallet server env files
+wallet-server/.env
+wallet-server/.env.local
+
 # Vercel
 .vercel
 .vercel.json
@@ -116,3 +120,7 @@ storybook-static
 **/public/sw.js.map
 **/public/workbox-*.js.map
 **/public/worker-*.js.map
+
+# Rust
+wallet-server/target/
+wallet-server/Cargo.lock
