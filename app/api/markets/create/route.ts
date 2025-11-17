@@ -21,13 +21,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PREDICTION_MARKET_ADDRESS, USDC_ADDRESS, ARC_NETWORK } from '@/lib/arcConfig';
+import { getCurrentChain, getChainConfig, getExplorerTxUrl, type ChainId } from '@/lib/chainConfig';
 import { toUsdcUnits } from '@/lib/usdc';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, thesis, expiryTimestamp, initialLiquidityUsdc, walletAddress } = body;
+    const { title, thesis, expiryTimestamp, initialLiquidityUsdc, walletAddress, chainId } = body;
 
     // Validate inputs
     if (!title || !thesis || !expiryTimestamp || !initialLiquidityUsdc) {
@@ -37,9 +37,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get chain configuration (use provided chainId or default)
+    const targetChainId = (chainId as ChainId) || getCurrentChain().chainId;
+    const chain = getChainConfig(targetChainId) || getCurrentChain();
+
     // Demo mode: If contract is not deployed, simulate a successful mint
-    if (!PREDICTION_MARKET_ADDRESS) {
-      console.log('⚠️  PredictionMarket contract not deployed. Using demo mode.');
+    if (!chain.predictionMarketAddress) {
+      console.log(`⚠️  PredictionMarket contract not deployed on ${chain.name}. Using demo mode.`);
       
       // Generate a mock market ID and transaction hash for demo purposes
       const mockMarketId = Math.floor(Math.random() * 1000000) + 1;
@@ -51,14 +55,16 @@ export async function POST(request: NextRequest) {
         success: true,
         marketId: mockMarketId,
         txHash: mockTxHash,
-        explorerUrl: `https://testnet-explorer.arc.network/tx/${mockTxHash}`,
+        explorerUrl: getExplorerTxUrl(targetChainId, mockTxHash),
         demo: true, // Flag to indicate this is a demo transaction
+        chainId: targetChainId,
+        chainName: chain.name,
       });
     }
 
     // Demo mode: If USDC address is not configured, also use demo mode
-    if (!USDC_ADDRESS || USDC_ADDRESS === '0x3600000000000000000000000000000000000000') {
-      console.log('⚠️  USDC contract address not configured. Using demo mode.');
+    if (!chain.usdcAddress || chain.usdcAddress === '0x3600000000000000000000000000000000000000') {
+      console.log(`⚠️  USDC contract address not configured on ${chain.name}. Using demo mode.`);
       
       // Generate a mock market ID and transaction hash for demo purposes
       const mockMarketId = Math.floor(Math.random() * 1000000) + 1;
@@ -70,8 +76,10 @@ export async function POST(request: NextRequest) {
         success: true,
         marketId: mockMarketId,
         txHash: mockTxHash,
-        explorerUrl: `https://testnet-explorer.arc.network/tx/${mockTxHash}`,
+        explorerUrl: getExplorerTxUrl(targetChainId, mockTxHash),
         demo: true, // Flag to indicate this is a demo transaction
+        chainId: targetChainId,
+        chainName: chain.name,
       });
     }
 
@@ -81,7 +89,7 @@ export async function POST(request: NextRequest) {
     
     // Demo mode: If PRIVATE_KEY is not configured, use demo mode
     if (!process.env.PRIVATE_KEY) {
-      console.log('⚠️  PRIVATE_KEY not configured. Using demo mode.');
+      console.log(`⚠️  PRIVATE_KEY not configured. Using demo mode on ${chain.name}.`);
       
       // Generate a mock market ID and transaction hash for demo purposes
       const mockMarketId = Math.floor(Math.random() * 1000000) + 1;
@@ -93,15 +101,15 @@ export async function POST(request: NextRequest) {
         success: true,
         marketId: mockMarketId,
         txHash: mockTxHash,
-        explorerUrl: `https://testnet-explorer.arc.network/tx/${mockTxHash}`,
+        explorerUrl: getExplorerTxUrl(targetChainId, mockTxHash),
         demo: true, // Flag to indicate this is a demo transaction
+        chainId: targetChainId,
+        chainName: chain.name,
       });
     }
 
-    // Create provider and signer
-    const provider = new ethers.JsonRpcProvider(
-      process.env.ARC_RPC_URL || 'https://rpc-testnet.arc.network'
-    );
+    // Create provider and signer using chain-specific RPC URL
+    const provider = new ethers.JsonRpcProvider(chain.rpcUrl);
     const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
     // Get contracts
@@ -118,39 +126,39 @@ export async function POST(request: NextRequest) {
     ];
 
     const marketContract = new ethers.Contract(
-      PREDICTION_MARKET_ADDRESS,
+      chain.predictionMarketAddress!,
       PredictionMarketABI,
       signer
     );
 
     const usdcContract = new ethers.Contract(
-      USDC_ADDRESS,
+      chain.usdcAddress!,
       USDCABI,
       signer
     );
 
-    // Convert liquidity to 6-decimal USDC units
-    const liquidityAmount = toUsdcUnits(initialLiquidityUsdc.toString());
+    // Convert liquidity to chain-specific USDC units (6 for Arc, 18 for BNB)
+    const liquidityAmount = toUsdcUnits(initialLiquidityUsdc.toString(), targetChainId);
 
     // Check USDC balance
     const signerAddress = await signer.getAddress();
     const balance = await usdcContract.balanceOf(signerAddress);
-    const balanceFormatted = ethers.formatUnits(balance, 6);
+    const balanceFormatted = ethers.formatUnits(balance, chain.usdcDecimals);
     if (balance < liquidityAmount) {
       return NextResponse.json(
         { 
           success: false, 
-          error: `Insufficient USDC balance. Need ${initialLiquidityUsdc} USDC, have ${balanceFormatted} USDC. Get testnet USDC from https://faucet.circle.com` 
+          error: `Insufficient USDC balance. Need ${initialLiquidityUsdc} USDC, have ${balanceFormatted} USDC.` 
         },
         { status: 400 }
       );
     }
 
     // Check and approve USDC if needed
-    const allowance = await usdcContract.allowance(signerAddress, PREDICTION_MARKET_ADDRESS);
+    const allowance = await usdcContract.allowance(signerAddress, chain.predictionMarketAddress!);
     if (allowance < liquidityAmount) {
       console.log('Approving USDC...');
-      const approveTx = await usdcContract.approve(PREDICTION_MARKET_ADDRESS, liquidityAmount);
+      const approveTx = await usdcContract.approve(chain.predictionMarketAddress!, liquidityAmount);
       await approveTx.wait();
       console.log('USDC approved');
     }
@@ -182,13 +190,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const explorerUrl = `https://testnet-explorer.arc.network/tx/${receipt.hash}`;
+    const explorerUrl = getExplorerTxUrl(targetChainId, receipt.hash);
 
     return NextResponse.json({
       success: true,
       marketId: marketId || undefined,
       txHash: receipt.hash,
       explorerUrl,
+      chainId: targetChainId,
+      chainName: chain.name,
     });
   } catch (error: any) {
     console.error('Error creating market:', error);

@@ -31,6 +31,7 @@ const nextConfig = {
       { module: /node_modules\/mammoth/ },
       { module: /node_modules\/pino/ },
       { module: /node_modules\/ethers/ },
+      { module: /node_modules\/@metamask/ },
       /Failed to parse source map/,
       /Can't resolve 'pino-pretty'/,
       /Can't resolve.*subscriber-polling/,
@@ -39,6 +40,7 @@ const nextConfig = {
       /Can't resolve '\.\/subscriber-polling\.js'/,
       /Can't resolve '\.\/subscriber-filterid\.js'/,
       /Can't resolve '\.\/subscriber-connection\.js'/,
+      /Can't resolve '@react-native-async-storage\/async-storage'/,
     ];
 
     // Make mammoth server-side only
@@ -55,6 +57,8 @@ const nextConfig = {
       ...config.resolve.alias,
       // Handle optional pino-pretty dependency (not needed in browser)
       'pino-pretty': false,
+      // Handle React Native modules that MetaMask SDK tries to import (not needed in web)
+      '@react-native-async-storage/async-storage': false,
       // Handle ethers.js optional subscriber modules
       './subscriber-polling.js': false,
       './subscriber-polling': false,

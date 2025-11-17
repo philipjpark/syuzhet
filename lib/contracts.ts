@@ -36,20 +36,29 @@ const USDC_ABI = [
 /**
  * Get PredictionMarket contract instance
  * @param signerOrProvider ethers Signer or Provider
+ * @param contractAddress Optional contract address (uses chain config if not provided)
  * @returns Contract instance
  */
 export async function getPredictionMarketContract(
-  signerOrProvider: SignerOrProvider
+  signerOrProvider: SignerOrProvider,
+  contractAddress?: string
 ): Promise<Contract> {
-  if (!PREDICTION_MARKET_ADDRESS) {
-    throw new Error('NEXT_PUBLIC_PREDICTION_MARKET_CONTRACT not set in environment variables');
-  }
-
   // Dynamic import to avoid bundling issues
   const { ethers } = await import('ethers');
+  const { getCurrentChain } = await import('./chainConfig');
+  
+  // Use provided address or get from chain config
+  const address = contractAddress || (() => {
+    const currentChain = getCurrentChain();
+    return currentChain.predictionMarketAddress || PREDICTION_MARKET_ADDRESS;
+  })();
+  
+  if (!address) {
+    throw new Error('Prediction market contract address not configured');
+  }
   
   return new ethers.Contract(
-    PREDICTION_MARKET_ADDRESS,
+    address,
     PREDICTION_MARKET_ABI,
     signerOrProvider
   );
@@ -58,20 +67,29 @@ export async function getPredictionMarketContract(
 /**
  * Get USDC contract instance
  * @param signerOrProvider ethers Signer or Provider
+ * @param contractAddress Optional contract address (uses chain config if not provided)
  * @returns Contract instance
  */
 export async function getUsdcContract(
-  signerOrProvider: SignerOrProvider
+  signerOrProvider: SignerOrProvider,
+  contractAddress?: string
 ): Promise<Contract> {
-  if (!USDC_ADDRESS) {
-    throw new Error('NEXT_PUBLIC_USDC_CONTRACT not set in environment variables');
-  }
-
   // Dynamic import to avoid bundling issues
   const { ethers } = await import('ethers');
+  const { getCurrentChain } = await import('./chainConfig');
   
+  // Use provided address or get from chain config
+  const address = contractAddress || (() => {
+    const currentChain = getCurrentChain();
+    return currentChain.usdcAddress || USDC_ADDRESS;
+  })();
+  
+  if (!address || address === '0x3600000000000000000000000000000000000000') {
+    throw new Error('USDC contract address not configured');
+  }
+
   return new ethers.Contract(
-    USDC_ADDRESS,
+    address,
     USDC_ABI,
     signerOrProvider
   );

@@ -63,16 +63,25 @@ export async function getCircleWalletAddress(
  * For hackathon: Basic implementation using ethers.js
  */
 export async function getWalletBalance(
-  walletAddress: string
+  walletAddress: string,
+  chainId?: number
 ): Promise<bigint> {
   // Basic implementation for hackathon demo
   // In production, this would use Circle Wallets API or cache
   const { ethers } = await import('ethers');
-  const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_CONTRACT;
-  const RPC_URL = process.env.NEXT_PUBLIC_ARC_RPC_URL || 'https://rpc-testnet.arc.network';
+  const { getChainConfig, getCurrentChain } = await import('@/lib/chainConfig');
+  
+  // Get chain configuration
+  const chain = chainId ? getChainConfig(chainId) : getCurrentChain();
+  if (!chain) {
+    throw new Error('Chain not configured');
+  }
 
-  if (!USDC_ADDRESS) {
-    throw new Error('NEXT_PUBLIC_USDC_CONTRACT not configured');
+  const USDC_ADDRESS = chain.usdcAddress;
+  const RPC_URL = chain.rpcUrl;
+
+  if (!USDC_ADDRESS || USDC_ADDRESS === '0x3600000000000000000000000000000000000000') {
+    throw new Error(`USDC contract not configured for ${chain.name}`);
   }
 
   const provider = new ethers.JsonRpcProvider(RPC_URL);

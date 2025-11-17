@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import NarrativeUpdatesFeed from '@/components/NarrativeUpdatesFeed';
 import { getPredictionMarketContract } from '@/lib/contracts';
-import { PREDICTION_MARKET_ADDRESS, ARC_NETWORK } from '@/lib/arcConfig';
+import { PREDICTION_MARKET_ADDRESS } from '@/lib/arcConfig';
+import { getCurrentChain, getExplorerAddressUrl } from '@/lib/chainConfig';
 import { Clock, User, DollarSign, ExternalLink } from 'lucide-react';
 import { useDynamicContext } from '@/components/providers/DynamicProvider';
 
@@ -40,24 +41,31 @@ export default function MarketDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const loadMarket = useCallback(async () => {
-    if (!PREDICTION_MARKET_ADDRESS) {
-      setError('Prediction market contract not configured');
-      setIsLoading(false);
-      return;
-    }
-
     try {
       // Dynamically import ethers to avoid bundling issues
       const { ethers } = await import('ethers');
+      const { getCurrentChain } = await import('@/lib/chainConfig');
       
-      // Get provider (use RPC for read-only operations)
-      const provider = new ethers.JsonRpcProvider(ARC_NETWORK.rpcUrl);
-
-      const marketContract = await getPredictionMarketContract(provider);
+      // Get provider using current chain RPC (chain-aware)
+      const currentChain = getCurrentChain();
+      
+      // Get chain-specific contract address
+      const contractAddress = currentChain.predictionMarketAddress || PREDICTION_MARKET_ADDRESS;
+      if (!contractAddress) {
+        setError(`Prediction market contract not configured for ${currentChain.name}`);
+        setIsLoading(false);
+        return;
+      }
+      
+      const provider = new ethers.JsonRpcProvider(currentChain.rpcUrl);
+      
+      // Use chain-specific contract address
+      const { getPredictionMarketContract } = await import('@/lib/contracts');
+      const marketContract = await getPredictionMarketContract(provider, contractAddress);
       const marketData = await marketContract.getMarket(marketId);
 
-      // Convert liquidity from 6-decimal USDC units
-      const liquidityUsdc = Number(ethers.formatUnits(marketData.liquidityUsdc, 6));
+      // Convert liquidity from chain-specific USDC units (6 for Arc, 18 for BNB)
+      const liquidityUsdc = Number(ethers.formatUnits(marketData.liquidityUsdc, currentChain.usdcDecimals));
 
       setMarket({
         title: marketData.title,
@@ -93,7 +101,7 @@ export default function MarketDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-800">
+      <div className="min-h-screen bg-gradient-to-br from-green-600 via-green-500 to-green-600">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
@@ -106,7 +114,7 @@ export default function MarketDetailPage() {
 
   if (error || !market) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-800">
+      <div className="min-h-screen bg-gradient-to-br from-green-600 via-green-500 to-green-600">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
@@ -127,7 +135,7 @@ export default function MarketDetailPage() {
   const isExpired = expiryDate < new Date();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-800">
+    <div className="min-h-screen bg-gradient-to-br from-green-600 via-green-500 to-green-600">
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
@@ -183,15 +191,24 @@ export default function MarketDetailPage() {
           </div>
 
           <div className="mt-6 pt-6 border-t border-lime-400/20">
-            <a
-              href={`${ARC_NETWORK.explorer}/address/${PREDICTION_MARKET_ADDRESS}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-lime-200 hover:text-lime-300 text-sm"
-            >
-              View on Arc Explorer
-              <ExternalLink className="w-4 h-4" />
-            </a>
+            {(() => {
+              const currentChain = getCurrentChain();
+              const contractAddress = currentChain.predictionMarketAddress || PREDICTION_MARKET_ADDRESS;
+              if (contractAddress) {
+                return (
+                  <a
+                    href={getExplorerAddressUrl(currentChain.chainId, contractAddress)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-lime-200 hover:text-lime-300 text-sm"
+                  >
+                    View on {currentChain.name} Explorer
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                );
+              }
+              return null;
+            })()}
             <span className="mx-2 text-white/40">•</span>
             <span className="text-white/60 text-sm">Market ID: {marketId}</span>
           </div>

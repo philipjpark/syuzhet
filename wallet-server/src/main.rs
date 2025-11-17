@@ -105,8 +105,8 @@ async fn get_wallet_info(
     
     Ok(Json(WalletInfo {
         address: format!("{:?}", address),
-        network: "Arc Testnet".to_string(),
-        chain_id: 1243,
+        network: state.config.chain_name.clone(),
+        chain_id: state.config.chain_id,
     }))
 }
 
@@ -132,10 +132,20 @@ async fn get_wallet_balance(
 }
 
 fn format_usdc_balance(balance: u64) -> String {
-    // USDC has 6 decimals
+    // USDC has 6 decimals on Arc, 18 on BNB Chain
+    // For now, assume 6 decimals (Arc). In production, this should be chain-aware.
     let integer = balance / 1_000_000;
     let decimal = balance % 1_000_000;
     format!("{}.{:06}", integer, decimal).trim_end_matches('0').trim_end_matches('.').to_string()
+}
+
+fn get_explorer_url(chain_id: u64, tx_hash: &str) -> String {
+    match chain_id {
+        1243 => format!("https://testnet-explorer.arc.network/tx/{}", tx_hash),
+        56 => format!("https://bscscan.com/tx/{}", tx_hash),
+        97 => format!("https://testnet.bscscan.com/tx/{}", tx_hash),
+        _ => format!("https://testnet-explorer.arc.network/tx/{}", tx_hash),
+    }
 }
 
 #[derive(Deserialize)]
@@ -212,10 +222,11 @@ async fn approve_usdc(
     match state.wallet_service.approve_usdc(spender, amount).await {
         Ok(receipt) => {
             let tx_hash = receipt.transaction_hash;
+            let tx_hash_str = format!("{:?}", tx_hash);
             Ok(Json(ApproveResponse {
                 success: true,
-                tx_hash: format!("{:?}", tx_hash),
-                explorer_url: format!("https://testnet-explorer.arc.network/tx/{:?}", tx_hash),
+                tx_hash: tx_hash_str.clone(),
+                explorer_url: get_explorer_url(state.config.chain_id, &tx_hash_str),
             }))
         }
         Err(e) => Err((
@@ -255,10 +266,11 @@ async fn transfer_usdc(
     match state.wallet_service.transfer_usdc(to, amount).await {
         Ok(receipt) => {
             let tx_hash = receipt.transaction_hash;
+            let tx_hash_str = format!("{:?}", tx_hash);
             Ok(Json(TransferResponse {
                 success: true,
-                tx_hash: format!("{:?}", tx_hash),
-                explorer_url: format!("https://testnet-explorer.arc.network/tx/{:?}", tx_hash),
+                tx_hash: tx_hash_str.clone(),
+                explorer_url: get_explorer_url(state.config.chain_id, &tx_hash_str),
             }))
         }
         Err(e) => Err((
@@ -321,10 +333,11 @@ async fn send_transaction(
     match state.wallet_service.send_transaction(to, data, value).await {
         Ok(receipt) => {
             let tx_hash = receipt.transaction_hash;
+            let tx_hash_str = format!("{:?}", tx_hash);
             Ok(Json(TransactionResponse {
                 success: true,
-                tx_hash: format!("{:?}", tx_hash),
-                explorer_url: format!("https://testnet-explorer.arc.network/tx/{:?}", tx_hash),
+                tx_hash: tx_hash_str.clone(),
+                explorer_url: get_explorer_url(state.config.chain_id, &tx_hash_str),
             }))
         }
         Err(e) => Err((

@@ -3,11 +3,6 @@
  * 
  * Current implementation: Dynamic Labs
  * Scaffolded for future: Circle Wallets (see lib/wallets/circleWallet.ts)
- * 
- * TODO: Add wallet provider toggle support
- * - Use getWalletProvider() from lib/wallets/types.ts
- * - Conditionally render Dynamic Labs or Circle Wallets provider
- * - See lib/wallets/circleWallet.ts for Circle Wallets integration stubs
  */
 'use client';
 
@@ -27,17 +22,17 @@ const MockDynamicContext = createContext({
 const MockModeContext = createContext<boolean>(false);
 
 // Export hook that works in both mock and real mode
-// IMPORTANT: Always call hooks unconditionally to follow Rules of Hooks
 export function useDynamicContext() {
   // Always call both hooks unconditionally
   const mockContext = useContext(MockDynamicContext);
   const isMockMode = useContext(MockModeContext);
   
-  // Always call the real hook unconditionally
-  // DynamicProvider is always mounted, so this will always work
+  // Always call useRealDynamicContext - it will work because DynamicProvider is always mounted
+  // In mock mode, the API call will fail, but the hook itself will still work
   const realContext = useRealDynamicContext();
   
   // Return the appropriate context based on mode
+  // In mock mode, use mock context. In real mode, use real context.
   return isMockMode ? mockContext : realContext;
 }
 
@@ -53,8 +48,9 @@ export function DynamicContextProvider({
   const isMockMode = !environmentId || environmentId === 'your_dynamic_environment_id' || environmentId.trim() === '';
 
   // Always mount DynamicProvider to ensure useRealDynamicContext can be called
-  // In mock mode, we'll use a dummy environment ID
-  const effectiveEnvironmentId = isMockMode ? 'mock-mode' : environmentId!;
+  // In mock mode, use a dummy environment ID - the API call will fail but that's okay
+  // We suppress the error in the console/UI
+  const effectiveEnvironmentId = isMockMode ? 'mock-mode-placeholder' : environmentId!;
   
   return (
     <MockModeContext.Provider value={isMockMode}>
@@ -75,8 +71,9 @@ export function DynamicContextProvider({
             appLogoUrl: '/syuzhet.png',
             overrides: {
               evmNetworks: [
+                // Arc Testnet
                 {
-                  chainId: 1243, // Arc Testnet
+                  chainId: 1243,
                   chainName: 'Arc Testnet',
                   nativeCurrency: {
                     name: 'USDC',
@@ -88,6 +85,34 @@ export function DynamicContextProvider({
                   ],
                   blockExplorerUrls: ['https://testnet-explorer.arc.network'],
                 },
+                // BNB Chain Mainnet
+                {
+                  chainId: 56,
+                  chainName: 'BNB Chain',
+                  nativeCurrency: {
+                    name: 'BNB',
+                    symbol: 'BNB',
+                    decimals: 18,
+                  },
+                  rpcUrls: [
+                    process.env.NEXT_PUBLIC_BNB_RPC_URL || 'https://bsc-dataseed1.binance.org',
+                  ],
+                  blockExplorerUrls: ['https://bscscan.com'],
+                },
+                // BNB Chain Testnet
+                {
+                  chainId: 97,
+                  chainName: 'BNB Chain Testnet',
+                  nativeCurrency: {
+                    name: 'BNB',
+                    symbol: 'BNB',
+                    decimals: 18,
+                  },
+                  rpcUrls: [
+                    process.env.NEXT_PUBLIC_BNB_TESTNET_RPC_URL || 'https://data-seed-prebsc-1-s1.binance.org:8545',
+                  ],
+                  blockExplorerUrls: ['https://testnet.bscscan.com'],
+                },
               ],
             },
           }}
@@ -98,4 +123,3 @@ export function DynamicContextProvider({
     </MockModeContext.Provider>
   );
 }
-

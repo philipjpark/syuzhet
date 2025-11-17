@@ -4,6 +4,7 @@ import { useDynamicContext } from '@/components/providers/DynamicProvider';
 import Image from 'next/image';
 import Link from 'next/link';
 import WalletConnection from '@/components/WalletConnection';
+import ChainSelector from '@/components/ChainSelector';
 
 export default function Header() {
   const { user, isAuthenticated } = useDynamicContext();
@@ -26,6 +27,7 @@ export default function Header() {
             </div>
           </Link>
               <div className="flex items-center space-x-4">
+                <ChainSelector />
                 <WalletConnection />
                 {isAuthenticated && (
                   <div className="text-sm font-medium text-lime-200">

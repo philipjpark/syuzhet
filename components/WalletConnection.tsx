@@ -12,7 +12,7 @@ import { useDynamicContext } from '@/components/providers/DynamicProvider';
 import { getWalletBalance } from '@/lib/wallets/circleWallet';
 import { fromUsdcUnits } from '@/lib/usdc';
 import { Wallet, Copy, CheckCircle, Loader2, ExternalLink } from 'lucide-react';
-import { ARC_NETWORK } from '@/lib/arcConfig';
+import { getChainConfig, getExplorerAddressUrl, getCurrentChain, type ChainId } from '@/lib/chainConfig';
 import axios from 'axios';
 
 const WALLET_STORAGE_KEY = 'syuzhet_wallet_connected';
@@ -22,8 +22,12 @@ export default function WalletConnection() {
   const [balance, setBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [serverWallet, setServerWallet] = useState<{ address: string } | null>(null);
+  const [serverWallet, setServerWallet] = useState<{ address: string; chainId?: number } | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  
+  // Get current chain from wallet or default
+  const currentChainId = primaryWallet?.chain?.id || serverWallet?.chainId || getCurrentChain().chainId;
+  const currentChain = getChainConfig(currentChainId) || getCurrentChain();
 
   // Load wallet connection from localStorage on mount
   useEffect(() => {
@@ -86,8 +90,8 @@ export default function WalletConnection() {
 
       setIsLoadingBalance(true);
       try {
-        const balanceBigInt = await getWalletBalance(walletAddress);
-        const balanceFormatted = fromUsdcUnits(balanceBigInt);
+        const balanceBigInt = await getWalletBalance(walletAddress, currentChainId);
+        const balanceFormatted = fromUsdcUnits(balanceBigInt, currentChainId);
         setBalance(parseFloat(balanceFormatted).toFixed(2));
       } catch (error: any) {
         console.error('Error fetching balance:', error);
@@ -118,7 +122,7 @@ export default function WalletConnection() {
   };
 
   const getExplorerUrl = (address: string) => {
-    return `https://testnet-explorer.arc.network/address/${address}`;
+    return getExplorerAddressUrl(currentChainId, address);
   };
 
   // Not connected state
@@ -129,7 +133,7 @@ export default function WalletConnection() {
       return (
         <div className="flex items-center gap-3">
           <div className="px-3 py-1.5 bg-green-800/50 border border-lime-400/30 rounded-lg text-xs font-medium text-lime-200">
-            Arc Testnet
+            {currentChain.name}
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-green-800/50 border border-lime-400/30 rounded-lg">
             <span className="text-sm font-mono text-lime-200">
@@ -151,7 +155,7 @@ export default function WalletConnection() {
               target="_blank"
               rel="noopener noreferrer"
               className="text-lime-300 hover:text-lime-200 transition-colors"
-              title="View on Arc Explorer"
+              title={`View on ${currentChain.name} Explorer`}
             >
               <ExternalLink className="w-4 h-4" />
             </a>
@@ -219,7 +223,7 @@ export default function WalletConnection() {
     <div className="flex items-center gap-3">
       {/* Network Badge */}
       <div className="px-3 py-1.5 bg-green-800/50 border border-lime-400/30 rounded-lg text-xs font-medium text-lime-200">
-        Arc Testnet
+        {currentChain.name}
       </div>
 
       {/* Balance */}
@@ -256,7 +260,7 @@ export default function WalletConnection() {
           target="_blank"
           rel="noopener noreferrer"
           className="text-lime-300 hover:text-lime-200 transition-colors"
-          title="View on Arc Explorer"
+          title={`View on ${currentChain.name} Explorer`}
         >
           <ExternalLink className="w-4 h-4" />
         </a>

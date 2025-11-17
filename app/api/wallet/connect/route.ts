@@ -14,6 +14,7 @@
 
 import { NextResponse } from 'next/server';
 import { ethers } from 'ethers';
+import { getCurrentChain } from '@/lib/chainConfig';
 
 export async function GET() {
   try {
@@ -28,10 +29,13 @@ export async function GET() {
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY);
     const address = wallet.address;
 
+    // Get current chain configuration
+    const currentChain = getCurrentChain();
+
     return NextResponse.json({
       address,
-      network: 'Arc Testnet',
-      chainId: 1243,
+      network: currentChain.name,
+      chainId: currentChain.chainId,
     });
   } catch (error: any) {
     console.error('Error in /api/wallet/connect:', error);

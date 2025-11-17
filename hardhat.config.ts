@@ -1,6 +1,11 @@
 /**
  * Hardhat configuration for Syuzhet
  * 
+ * Supports multiple chains:
+ * - Arc Testnet (Chain ID: 1243)
+ * - BNB Chain Mainnet (Chain ID: 56)
+ * - BNB Chain Testnet (Chain ID: 97)
+ * 
  * Arc Testnet deployment tutorial:
  * https://docs.arc.network/arc/tutorials/deploy-on-arc
  */
@@ -24,6 +29,16 @@ const config: HardhatUserConfig = {
     arcTestnet: {
       url: process.env.ARC_RPC_URL || "https://rpc-testnet.arc.network",
       chainId: 1243,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
+    bnbMainnet: {
+      url: process.env.BNB_RPC_URL || "https://bsc-dataseed1.binance.org",
+      chainId: 56,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
+    bnbTestnet: {
+      url: process.env.BNB_TESTNET_RPC_URL || "https://data-seed-prebsc-1-s1.binance.org:8545",
+      chainId: 97,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
   },
